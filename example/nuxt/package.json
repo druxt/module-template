@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "druxt": "latest",
-    "druxt-module-template": "file:..",
+    "druxt-module-template": "link:../..",
     "nuxt": "latest"
   }
 }
