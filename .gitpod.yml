@@ -5,16 +5,18 @@ tasks:
   - init: |
       # Installing DDev and Drupal backend.
       .gitpod/scripts/ddev-download-images.sh
-      # .gitpod/scripts/ddev-setup.sh
-      # .gitpod/scripts/drupal-setup.sh
+      .gitpod/scripts/ddev-setup.sh
+      .gitpod/scripts/drupal-setup.sh
+
       # Installing Nuxt/Druxt frontend.
-      # .gitpod/scripts/nuxt-setup.sh
+      .gitpod/scripts/nuxt-setup.sh
+
       # Build module
-      # yarn && yarn build
+      yarn && yarn build
     command: |
-      # .gitpod/scripts/ddev-setup.sh
-      # .gitpod/scripts/nuxt-setup.sh
-      # cd $GITPOD_REPO_ROOT/example/nuxt && NUXT_TELEMETRY_DISABLED=1 yarn dev
+      .gitpod/scripts/ddev-setup.sh
+      .gitpod/scripts/nuxt-setup.sh
+      cd $GITPOD_REPO_ROOT/example/nuxt && NUXT_TELEMETRY_DISABLED=1 yarn dev
 
 # VScode xdebug extension
 vscode:
