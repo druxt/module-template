@@ -4,6 +4,7 @@ exports[`DruxtModuleComponent Hello world 1`] = `
 Object {
   "$attrs": Object {
     "foo": "bar",
+    "langcode": undefined,
   },
   "is": "DruxtWrapper",
   "options": Array [
@@ -14,6 +15,7 @@ Object {
   "props": Object {},
   "propsData": Object {
     "foo": "bar",
+    "langcode": undefined,
   },
   "settings": Object {},
   "slots": Array [

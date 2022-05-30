@@ -15,7 +15,8 @@ const mountComponent = function() {
     {
       localVue,
       mocks: {
-        $fetchState: { pending: true }
+        $fetchState: { pending: true },
+        $route: { meta: { lang: undefined }},
       }
     }
   )
