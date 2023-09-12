@@ -36,7 +36,7 @@
     "esbuild-jest": "0.5.0",
     "eslint": "8.28.0",
     "eslint-plugin-nuxt": "4.0.0",
-    "jest": "27.5.1",
+    "jest": "29.7.0",
     "siroc": "0.16.0",
     "vue-jest": "3.0.7",
     "vue-template-compiler": "2.7.14"
