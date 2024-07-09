@@ -16,7 +16,7 @@
   "require": {
     "composer/installers": "2.2.0",
     "drupal-tome/tome_drush": "dev-master",
-    "drupal/core-composer-scaffold": "9.4.8",
+    "drupal/core-composer-scaffold": "10.3.1",
     "drupal/core-project-message": "9.4.8",
     "drupal/core-recommended": "9.4.8",
     "drupal/druxt": "1.1.1",
