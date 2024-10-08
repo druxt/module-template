@@ -18,7 +18,7 @@
     "drupal-tome/tome_drush": "dev-master",
     "drupal/core-composer-scaffold": "9.4.8",
     "drupal/core-project-message": "9.4.8",
-    "drupal/core-recommended": "9.4.8",
+    "drupal/core-recommended": "10.2.9",
     "drupal/druxt": "1.1.1",
     "drupal/tome": "1.7.0",
     "drush/drush": "11.3.2"
