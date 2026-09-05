@@ -1,20 +1,17 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Suggest something this module should do
 title: ''
-labels: ''
+labels: enhancement
 assignees: ''
-
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## The problem
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+What are you trying to do that this module makes hard or impossible?
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## What you would like
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+## Alternatives you have considered
+
+## Anything else

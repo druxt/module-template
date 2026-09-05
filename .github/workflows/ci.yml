@@ -1,36 +1,91 @@
+---
 name: CI
+
+# The same lint and test set as .gitlab-ci.yml. This repository is mirrored and
+# releases are cut here, so both hosts have to agree. Nothing on this side lints
+# this file: the GitLab pipeline runs actionlint over it in return.
 
 on:
   push:
-    branches: [ main ]
-
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [14.x, 16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
-    - uses: actions/checkout@v2
+      # Actions are pinned to commit SHAs, not tags. A tag is a mutable
+      # reference to code that runs with this repository's credentials.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
 
-    - run: npm i
+      # corepack reads the packageManager field, so the manager the lockfile was
+      # written by is the one that installs it, and this file never names one.
+      - run: corepack enable && corepack prepare --activate
 
-    - run: npm run build
+      - run: npm ci
 
-    - run: npm run lint
+      - run: npm run lint:js
 
-    - run: npm test --reporters=jest-junit --runInBand
+      - run: npm run lint:md
 
-    - name: Codecov
-      uses: codecov/codecov-action@v3.1.1
+      - run: npm run lint:cspell
+
+      - run: npm run lint:knip
+
+      # This repository is public, and its README and example are what people
+      # copy. A host only the author can reach must never reach a tracked file.
+      - run: npm run lint:private
+
+      - run: npm run lint:audit
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: corepack enable && corepack prepare --activate
+
+      - run: npm ci
+
+      - run: npm run build
+
+      # The coverage floor in jest.config.js is what fails here. Codecov below
+      # adds the per-pull-request view on top and is not the gate.
+      - run: npm test -- --reporters=default --reporters=jest-junit --runInBand
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: test-results
+          path: reports/junit/
+
+      - name: Upload coverage to Codecov
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238  # v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage

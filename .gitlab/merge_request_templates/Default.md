@@ -1,5 +1,5 @@
 <!--
-Title this pull request the way you would title a commit:
+Title this merge request the way you would title a commit:
 
     <type>(<scope>): <description>
 

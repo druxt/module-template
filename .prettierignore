@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+reports/
+test-results/
+playwright-report/
+example/drupal/
+package-lock.json
+CHANGELOG.md
+**/__snapshots__/
+
+# Pipeline definitions are owned by yamllint, not prettier. The two disagree on
+# comment spacing, and letting both format these files means every run of one
+# undoes the other.
+.gitlab-ci.yml
+.github/workflows/

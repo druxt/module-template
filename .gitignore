@@ -104,3 +104,12 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Test and lint output
+coverage/
+reports/
+test-results/
+playwright-report/
+
+# Playwright's own browser cache
+.playwright/

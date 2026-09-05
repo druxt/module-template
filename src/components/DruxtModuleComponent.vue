@@ -37,10 +37,7 @@ export default {
      *
      * @param {object} context - The Druxt module context object.
      */
-    componentOptions: (context) => ([
-      [context.foo, 'default'],
-      ['default']
-    ]),
+    componentOptions: (context) => [[context.foo, 'default'], ['default']],
 
     /**
      * Create an object of props data to be used by the Druxt Wrapper component.
@@ -48,7 +45,7 @@ export default {
      * @param {object} context - The Druxt module context object.
      */
     propsData: (context) => ({
-      foo: context.foo
+      foo: context.foo,
     }),
 
     /**
@@ -58,9 +55,9 @@ export default {
      */
     slots(h) {
       return {
-        default: () => h('div', ['Hello world'])
+        default: () => h('div', ['Hello world']),
       }
-    }
-  }
+    },
+  },
 }
 </script>
