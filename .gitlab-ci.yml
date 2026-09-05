@@ -188,12 +188,21 @@ test:unit:
   variables:
     VISUAL_RESULTS_DIR: test-results
 
+# Runs only once baselines are committed. Playwright writes a baseline and
+# passes on the first run of any snapshot assertion, so this job with an empty
+# test/e2e/__snapshots__ would be green while checking nothing. Absent until
+# armed is honest; present and vacuously green is not.
+#
+# To arm it: run the manual visual:update job below and commit the PNGs it
+# produces as an artifact.
 visual:
   extends: .playwright
   stage: visual
   needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      exists:
+        - test/e2e/__snapshots__/**/*.png
   script:
     - section_start "visual" "Running visual regression tests"
     - npm run build
