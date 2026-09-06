@@ -16,8 +16,8 @@ dbaeumer
 DDEV
 devcontainer
 devcontainers
-Druxt
 druxt
+Druxt
 druxtjs
 esbenp
 esbuild
@@ -36,6 +36,7 @@ networkidle
 Nuxt
 nuxt
 nvmrc
+opencode
 pyyaml
 siroc
 unparseable

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this template are recorded here. The format is
+Changes to this template are recorded here. The format is
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -18,6 +18,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   than aspirational.
 - A private-host lint, so a URL only the author can reach cannot reach a
   tracked file in a public repository.
+- An attribution check, in the commit-msg hook and in the pipeline, so that no
+  commit, merge request description or tracked file credits an AI tool as
+  author, co-author or generator.
+- Prose linting with Vale and the ai-tells style, over the markdown a change
+  touches, its commit messages and the merge request description.
 - Visual regression with Playwright, and merge-request automation that posts
   baseline, render and diff for each failure.
 - A devcontainer covering VS Code, Codespaces and DevPod.

@@ -147,6 +147,39 @@ lint:commit:
     - npm run lint:commit -- --from "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" --to HEAD --verbose
     - section_end "commitlint"
 
+# The work is the author's. No commit, merge request description or tracked
+# file may credit an AI tool as author, co-author or generator. Full history,
+# because the range is the merge request's own and its base has to be present.
+lint:attribution:
+  image: node:16.20.1
+  stage: lint
+  interruptible: true
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - section_start "attribution" "Checking for AI attribution"
+    - bash .gitlab/scripts/check-attribution.sh
+    - section_end "attribution"
+
+# Project voice over the markdown a change touches, its commit messages and the
+# merge request description. The changesets README and the Drupal scaffold are third-party text.
+lint:prose:
+  image: node:16.20.1
+  stage: lint
+  interruptible: true
+  variables:
+    GIT_DEPTH: 0
+    PROSE_LINT_GLOB: "!{.changeset,example/drupal}/**"
+  cache:
+    key: vale-3.17.1
+    paths:
+      - .vale/
+  script:
+    - section_start "prose" "Linting prose with Vale"
+    - bash .gitlab/scripts/install-vale.sh .vale/bin .vale/styles
+    - bash .gitlab/scripts/lint-prose.sh
+    - section_end "prose"
+
 #
 # --- Test ---
 #

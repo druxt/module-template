@@ -1,7 +1,10 @@
 {
   "files": ["**/*.{js,mjs,vue,json,jsonc,md,yml,yaml}"],
   "dictionaryDefinitions": [
-    { "name": "project-words", "path": "./.cspell-project-words.txt" }
+    {
+      "name": "project-words",
+      "path": "./.cspell-project-words.txt"
+    }
   ],
   "dictionaries": ["project-words", "bash", "misc", "node", "softwareTerms"],
   "ignorePaths": [
@@ -19,7 +22,8 @@
     "package-lock.json",
     "*.svg",
     "*.png",
-    "*.snap"
+    "*.snap",
+    ".vale/"
   ],
   "useGitignore": true
 }

@@ -113,3 +113,6 @@ playwright-report/
 
 # Playwright's own browser cache
 .playwright/
+
+# Vale binary and styles, installed by .gitlab/scripts/install-vale.sh
+.vale/

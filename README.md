@@ -1,9 +1,9 @@
 # Druxt module template
 
 Starting point for a [Druxt](https://druxtjs.org) module, and the reference
-implementation of the Druxt repository standard.
+module for the Druxt repository standard.
 
-Two ways to use it: start something new from it, or bring an existing module up
+Start something new from it, or bring an existing module up
 to the same footing. They are different jobs and the second is the more common
 one.
 
@@ -27,11 +27,8 @@ python3 check-standards.py --standard standards.yml \
 
 It reports every requirement, whether your repository meets it, and why not
 when it does not. The gaps are independent, so they can be closed one merge
-request at a time rather than in a single sweep that is impossible to review.
-
-Copying wholesale is worse than it looks: you inherit this template's coverage
-floor, its dictionary, and its knip exemptions, none of which describe your
-module. The floor in particular has to be measured from your own tests.
+request at a time rather than in one pass that is impossible to review. Copying
+wholesale is worse than it looks, because you inherit this template's coverage floor and its dictionary, and neither describes your module. The floor has to be measured from your own tests.
 
 ## What you get
 
@@ -58,7 +55,7 @@ npm run lint         # every linter
 npm run test:e2e     # Playwright against the example application
 ```
 
-`.mise.toml` pins the toolchain and carries the same commands as tasks, so with
+`.mise.toml` pins the toolchain and defines the same commands as tasks, so with
 [mise](https://mise.jdx.dev) installed, `mise run ci` runs what the pipeline
 runs.
 

@@ -1,6 +1,6 @@
 # Agent instructions
 
-Starting point for a Druxt module, and the reference implementation of the
+Starting point for a Druxt module, and the reference module for the
 Druxt repository standard.
 
 ## Rules
@@ -13,9 +13,18 @@ Druxt repository standard.
   on you.
 - **Conventional Commits**, and the same for pull request and merge request
   titles. These repositories squash-merge, so the title becomes the commit
-  subject; a prose title breaks the next push to the target branch.
+  subject, and a prose title breaks the next push to the target branch.
 - **The coverage floor in `jest.config.js` goes up, never down.** If a change
   drops coverage, the change needs a test.
+- **No AI tool is credited.** No co-author trailer naming an assistant, no
+  generated-with footer, no session link, in commits, merge request
+  descriptions or tracked files. The work is the author's. The commit-msg hook
+  rejects it locally, and `npm run lint:attribution` and the pipeline check
+  the rest.
+- **Prose is linted with Vale.** The ai-tells style is the minimum, and it
+  covers the markdown a change touches, its commit messages and the merge
+  request description. `npm run lint:prose:install` once, then
+  `npm run lint:prose`.
 - **Never regenerate visual baselines locally.** Use the manual `visual:update`
   job. Chromium renders differently on ARM and a locally generated baseline is
   a permanent false diff for everyone else.
@@ -27,9 +36,9 @@ Druxt repository standard.
 | `src/`             | The module. `index.js` is the Nuxt module, `components/` its components |
 | `test/`            | Unit tests. `test/e2e/` is Playwright, and is not run by `npm test`     |
 | `example/`         | A Drupal backend and a Nuxt application that loads the module           |
-| `scripts/`         | Repository tooling, not shipped                                         |
+| `scripts/`         | Repository tooling, excluded from the package                           |
 | `.githooks/`       | Committed hooks, enabled by `npm install`                               |
-| `.gitlab/scripts/` | Merge-request automation, copied from the workspace standard            |
+| `.gitlab/scripts/` | Content checks and merge-request automation, copied from the standard   |
 
 ## Commands
 
@@ -37,7 +46,8 @@ Druxt repository standard.
 npm install          # dependencies, and enables the git hooks
 npm run build        # siroc
 npm test             # jest, coverage floor enforced
-npm run lint         # every linter
+npm run lint         # every linter except prose
+npm run lint:prose   # Vale, after `npm run lint:prose:install`
 npm run test:e2e     # Playwright, needs the example application
 ```
 
@@ -46,4 +56,4 @@ npm run test:e2e     # Playwright, needs the example application
 Pinned in `.mise.toml`. Node is deliberately held at 16.20.1 to match what the
 module's own dependencies support; the lint tooling is pinned to versions that
 still run there. Bumping either is a deliberate, coordinated change, not a
-routine dependency update, which is why Renovate is configured not to offer it.
+routine dependency update, so Renovate is configured not to offer it.
