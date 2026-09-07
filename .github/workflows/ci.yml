@@ -111,3 +111,64 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage
+
+  # The example on a real backend: the module is built, the example installs it
+  # by path, Drupal 11 is provisioned from scratch on SQLite, the example is
+  # generated against it and Playwright reads the result. Visual comparisons
+  # are excluded here on purpose: the committed baselines come from the GitLab
+  # runner, and this runner renders differently.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240  # v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, gd, intl, zip, opcache
+          tools: composer:2
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            example/nuxt/package-lock.json
+
+      - run: corepack enable && corepack prepare --activate
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Provision and start the example backend
+        env:
+          WEBSERVER_HOST: 127.0.0.1
+          WEBSERVER_PORT: 8888
+        run: npm run example:assemble && npm run example:provision && npm run example:start
+
+      - name: Backend answers JSON:API
+        run: . ./example/.env && curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'
+
+      - run: npm run example:install
+
+      - run: npm run example:generate
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests against the generated example
+        run: |
+          npm run serve &
+          sleep 1
+          PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: |
+            test-results/
+            playwright-report/

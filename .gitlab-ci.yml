@@ -15,6 +15,7 @@
 
 stages:
   - lint
+  - build
   - test
   - visual
   - preview
@@ -52,6 +53,28 @@ default:
     - corepack enable
     - corepack prepare --activate
     - npm ci --cache .npm --prefer-offline
+
+# PHP for the example's Drupal 11 backend, with Node 16 alongside for the
+# generate step that needs both running at once.
+.php-node:
+  image: php:8.4
+  interruptible: true
+  cache:
+    key: php-8.4-composer
+    paths:
+      - example/drupal/vendor/
+      - .npm/
+  before_script:
+    - !reference [default, before_script]
+    - section_start "toolchain" "Installing PHP extensions, Composer and Node"
+    - apt-get update -yqq && apt-get install -yqq git unzip sqlite3 libsqlite3-dev libzip-dev libicu-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev libxml2-dev python3 > /dev/null
+    - docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
+    - docker-php-ext-install -j"$(nproc)" pdo_sqlite intl gd zip opcache > /dev/null
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=2.8.6 > /dev/null
+    - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash > /dev/null 2>&1
+    - export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use && nvm install > /dev/null && nvm use > /dev/null
+    - node --version && php --version | head -1
+    - section_end "toolchain"
 
 #
 # --- Lint ---
@@ -207,6 +230,70 @@ test:unit:
   coverage: '/All files\s*\|\s*([\d.]+)/'
 
 #
+# --- Example ---
+#
+# The module is built, the example installs it by path, the backend is
+# provisioned from scratch on SQLite, and the example is generated against it.
+# The generated example is what the end-to-end, visual and preview jobs read.
+#
+
+example:generate:
+  extends: .php-node
+  stage: build
+  needs: []
+  variables:
+    WEBSERVER_HOST: '127.0.0.1'
+    WEBSERVER_PORT: '8888'
+  script:
+    - section_start "module" "Building the module"
+    - corepack enable && corepack prepare --activate
+    - npm ci --cache .npm --prefer-offline
+    - npm run build
+    - section_end "module"
+    - section_start "backend" "Provisioning and starting the example backend"
+    - npm run example:assemble && npm run example:provision && npm run example:start
+    - . ./example/.env && curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'
+    - section_end "backend"
+    - section_start "generate" "Generating the example"
+    - npm run example:install
+    - npm run example:generate
+    - test -f example/nuxt/dist/index.html
+    - section_end "generate"
+  artifacts:
+    paths:
+      - example/nuxt/dist/
+    expire_in: 1 week
+
+.playwright:
+  extends: .node
+  image: mcr.microsoft.com/playwright:v1.49.1-jammy
+  variables:
+    PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+    VISUAL_RESULTS_DIR: test-results
+  before_script:
+    - !reference [.node, before_script]
+    - npm run serve &
+    - sleep 1 && curl -sf http://127.0.0.1:3000/ > /dev/null
+
+# Functional checks against the generated example, on every pipeline. Visual
+# comparisons are the separate job below, because they need committed
+# baselines to mean anything.
+test:e2e:
+  extends: .playwright
+  stage: test
+  needs: [example:generate]
+  script:
+    - section_start "e2e" "Running end-to-end tests against the generated example"
+    - npm run test:e2e
+    - section_end "e2e"
+  artifacts:
+    when: on_failure
+    paths:
+      - test-results/
+      - playwright-report/
+    expire_in: 1 week
+
+#
 # --- Visual ---
 #
 # Playwright against the example application. Baselines are committed, and are
@@ -214,12 +301,6 @@ test:unit:
 # differently on ARM, and a baseline generated there is a permanent false diff
 # for everyone else.
 #
-
-.playwright:
-  extends: .node
-  image: mcr.microsoft.com/playwright:v1.49.1-jammy
-  variables:
-    VISUAL_RESULTS_DIR: test-results
 
 # Runs only once baselines are committed. Playwright writes a baseline and
 # passes on the first run of any snapshot assertion, so this job with an empty
@@ -231,15 +312,14 @@ test:unit:
 visual:
   extends: .playwright
   stage: visual
-  needs: []
+  needs: [example:generate]
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
       exists:
         - test/e2e/__snapshots__/**/*.png
   script:
-    - section_start "visual" "Running visual regression tests"
-    - npm run build
-    - npm run test:e2e
+    - section_start "visual" "Comparing against the committed baselines"
+    - npm run test:visual
     - section_end "visual"
   after_script:
     # Posts baseline, render and diff for each failure as one sticky note, and
@@ -258,14 +338,13 @@ visual:
 visual:update:
   extends: .playwright
   stage: visual
-  needs: []
+  needs: [example:generate]
   rules:
     - when: manual
       allow_failure: true
   script:
     - section_start "visual-update" "Regenerating visual baselines"
-    - npm run build
-    - npm run test:e2e:update
+    - npm run test:visual:update
     - section_end "visual-update"
   artifacts:
     when: always
@@ -283,7 +362,7 @@ visual:update:
 preview:live:
   extends: .node
   stage: preview
-  needs: []
+  needs: [example:generate]
   timeout: 1h
   variables:
     PREVIEW_DIR: example/nuxt/dist
@@ -294,11 +373,6 @@ preview:live:
       when: manual
       allow_failure: true
   script:
-    - section_start "preview-build" "Building the example application"
-    - npm run build
-    - npm --prefix example/nuxt install
-    - npm --prefix example/nuxt run generate
-    - section_end "preview-build"
     - section_start "preview-tunnel" "Opening a cloudflared tunnel"
     - bash .gitlab/scripts/run-live-preview-tunnel.sh
     - section_end "preview-tunnel"

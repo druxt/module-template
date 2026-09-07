@@ -1,6 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@2/schema.json",
-  "entry": ["src/index.js", "scripts/*.mjs", "test/**/*.test.js"],
+  "entry": [
+    "scripts/serve.mjs",
+    "src/index.js",
+    "scripts/*.mjs",
+    "test/**/*.test.js"
+  ],
   "project": ["src/**/*.{js,vue}", "scripts/**/*.mjs"],
   "ignoreDependencies": [
     // Invoked by name from .gitlab-ci.yml and .github/workflows, never

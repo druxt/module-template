@@ -7,6 +7,8 @@
 # and the pipeline stays a thin wrapper rather than a second source of truth.
 
 [tools]
+# PHP for the example backend (example/drupal, Drupal 11); Node for the module.
+php = "8.4"
 node = "16.20.1"
 
 [tasks.install]

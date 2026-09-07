@@ -26,7 +26,7 @@ test.describe('the example application', () => {
     await expect(page.getByText('Hello world')).toBeVisible()
   })
 
-  test('matches the committed baseline', async ({ page }) => {
+  test('matches the committed baseline @visual', async ({ page }) => {
     await page.goto('/')
     // Fonts and images settle after load; without this the first render is
     // captured mid-layout and every run differs from every other.

@@ -116,3 +116,6 @@ playwright-report/
 
 # Vale binary and styles, installed by .gitlab/scripts/install-vale.sh
 .vale/
+
+# Written by example/drupal/.devtools/start with the backend URL
+example/.env

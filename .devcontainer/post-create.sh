@@ -9,8 +9,23 @@ set -euo pipefail
 echo "Trusting this repository's .mise.toml..."
 mise trust
 
+# The php image has the core extensions Drupal needs except gd, intl and
+# zip. sqlite3 is the CLI drush uses to reset the throwaway database.
+echo "Installing PHP extensions and system packages..."
+sudo apt-get update -qq > /dev/null
+sudo apt-get install -y -qq libpng-dev libjpeg-dev libfreetype6-dev libicu-dev libzip-dev sqlite3 > /dev/null
+sudo docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
+sudo docker-php-ext-install -j"$(nproc)" gd intl zip > /dev/null
+php -r "exit(extension_loaded('gd') && extension_loaded('intl') && extension_loaded('zip') ? 0 : 1);" || { echo "PHP extensions failed to load" >&2; exit 1; }
+
 echo "Installing dependencies..."
 npm install
+
+echo "Building the module, which the example links to by path..."
+npm run build
+
+echo "Provisioning and starting the example backend, then installing the example..."
+npm run example:setup
 
 # npm install enables the hooks via scripts/postinstall.mjs. Repeated here for
 # the case where the container was built with install scripts disabled, which

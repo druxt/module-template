@@ -1,7 +1,13 @@
 {
   "name": "Druxt module",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-16-bullseye",
+  // PHP for the example's Drupal backend, provisioned without Docker by
+  // example/drupal/.devtools. Node 16 for the module comes from the feature
+  // below: Nuxt 2 builds on webpack 4, which does not run on a newer Node.
+  "image": "mcr.microsoft.com/devcontainers/php:1-8.4-bookworm",
   "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "16.20.1"
+    },
     "ghcr.io/devcontainers/features/github-cli:1": {},
     // Installed through gh-release rather than a mise feature: the
     // devcontainers-contrib registry that hosted one is gone, and the
@@ -16,9 +22,12 @@
     }
   },
   "containerEnv": {
-    // Node comes from the image; .mise.toml's pin is for host users.
-    // Without this, `mise install` builds Node from source in here.
-    "MISE_DISABLE_TOOLS": "node"
+    // Node and PHP come from the image and features; .mise.toml's pins are
+    // for host users. Without this, `mise install` builds both from source
+    // in here.
+    "MISE_DISABLE_TOOLS": "node,php",
+    // Pin the example backend's port so the forward below always matches.
+    "WEBSERVER_PORT": "8888"
   },
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {
@@ -43,12 +52,16 @@
       }
     }
   },
-  "forwardPorts": [3000],
+  "forwardPorts": [3000, 8888],
   "portsAttributes": {
     "3000": {
       "label": "Example application",
       "onAutoForward": "notify"
+    },
+    "8888": {
+      "label": "Example backend (example/drupal/.devtools)",
+      "onAutoForward": "silent"
     }
   },
-  "remoteUser": "node"
+  "remoteUser": "vscode"
 }

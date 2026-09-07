@@ -9,8 +9,10 @@ const { defineConfig, devices } = require('@playwright/test')
  * renders differently on ARM, so a baseline generated on an Apple silicon
  * machine is a permanent false diff for everyone else.
  *
- * `webServer` builds and serves the example application, so a developer runs
- * the same thing CI does with one command rather than remembering a sequence.
+ * Tests tagged @visual compare against committed baselines and run only where
+ * those were made, the manual `visual:update` pipeline job. Without
+ * PLAYWRIGHT_BASE_URL the config starts the example's dev server, which needs
+ * the example backend running: `npm run example:setup` once.
  */
 module.exports = defineConfig({
   testDir: './test/e2e',
@@ -46,8 +48,10 @@ module.exports = defineConfig({
       use: { ...devices['Pixel 5'] },
     },
     {
+      // Chromium, not the device's WebKit default: one browser everywhere
+      // keeps the baselines comparable and the runners small.
       name: 'tablet',
-      use: { ...devices['iPad (gen 7)'] },
+      use: { ...devices['iPad (gen 7)'], defaultBrowserType: 'chromium' },
     },
     {
       name: 'desktop',
@@ -60,7 +64,8 @@ module.exports = defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: 'npm --prefix example/nuxt run dev',
+        // The example needs its backend up: `npm run example:setup` once.
+        command: 'npm run example:dev',
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
         timeout: 180 * 1000,

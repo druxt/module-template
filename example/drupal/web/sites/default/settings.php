@@ -1,6 +1,6 @@
 <?php
 
-// @codingStandardsIgnoreFile
+// phpcs:ignoreFile
 
 /**
  * @file
@@ -115,14 +115,6 @@ $databases = [];
  * namespace. This is optional for projects managed with Composer if the
  * driver's namespace is in Composer's autoloader.
  *
- * Transaction support is enabled by default for all drivers that support it,
- * including MySQL. To explicitly disable it, set the 'transactions' key to
- * FALSE.
- * Note that some configurations of MySQL, such as the MyISAM engine, don't
- * support it and will proceed silently even if enabled. If you experience
- * transaction related crashes with such configuration, set the 'transactions'
- * key to FALSE.
- *
  * For each database, you may optionally specify multiple "target" databases.
  * A target database allows Drupal to try to send certain queries to a
  * different database if it can but fall back to the default connection if not.
@@ -146,49 +138,16 @@ $databases = [];
  * request as needed.  The fourth line creates a new database with a name of
  * "extra".
  *
- * You can optionally set prefixes for some or all database table names
- * by using the 'prefix' setting. If a prefix is specified, the table
- * name will be prepended with its value. Be sure to use valid database
- * characters only, usually alphanumeric and underscore. If no prefixes
- * are desired, leave it as an empty string ''.
+ * You can optionally set a prefix for all database table names by using the
+ * 'prefix' setting. If a prefix is specified, the table name will be prepended
+ * with its value. Be sure to use valid database characters only, usually
+ * alphanumeric and underscore. If no prefix is desired, do not set the 'prefix'
+ * key or set its value to an empty string ''.
  *
- * To have all database names prefixed, set 'prefix' as a string:
+ * For example, to have all database table prefixed with 'main_', set:
  * @code
  *   'prefix' => 'main_',
  * @endcode
- *
- * Per-table prefixes are deprecated as of Drupal 8.2, and will be removed in
- * Drupal 9.0. After that, only a single prefix for all tables will be
- * supported.
- *
- * To provide prefixes for specific tables, set 'prefix' as an array.
- * The array's keys are the table names and the values are the prefixes.
- * The 'default' element is mandatory and holds the prefix for any tables
- * not specified elsewhere in the array. Example:
- * @code
- *   'prefix' => [
- *     'default'   => 'main_',
- *     'users'     => 'shared_',
- *     'sessions'  => 'shared_',
- *     'role'      => 'shared_',
- *     'authmap'   => 'shared_',
- *   ],
- * @endcode
- * You can also use a reference to a schema/database as a prefix. This may be
- * useful if your Drupal installation exists in a schema that is not the default
- * or you want to access several databases from the same code base at the same
- * time.
- * Example:
- * @code
- *   'prefix' => [
- *     'default'   => 'main.',
- *     'users'     => 'shared.',
- *     'sessions'  => 'shared.',
- *     'role'      => 'shared.',
- *     'authmap'   => 'shared.',
- *   ];
- * @endcode
- * NOTE: MySQL and SQLite's definition of a schema is a database.
  *
  * Advanced users can add or override initial commands to execute when
  * connecting to the database server, as well as PDO connection settings. For
@@ -238,9 +197,9 @@ $databases = [];
  * Sample Database configuration format for a driver in a contributed module:
  * @code
  *   $databases['default']['default'] = [
- *     'driver' => 'mydriver',
- *     'namespace' => 'Drupal\mymodule\Driver\Database\mydriver',
- *     'autoload' => 'modules/mymodule/src/Driver/Database/mydriver/',
+ *     'driver' => 'my_driver',
+ *     'namespace' => 'Drupal\my_module\Driver\Database\my_driver',
+ *     'autoload' => 'modules/my_module/src/Driver/Database/my_driver/',
  *     'database' => 'databasename',
  *     'username' => 'sqlusername',
  *     'password' => 'sqlpassword',
@@ -261,7 +220,7 @@ $databases = [];
  * directory in the public files path. The setting below allows you to set
  * its location.
  */
-$settings['config_sync_directory'] = '../config/sync';
+# $settings['config_sync_directory'] = '/directory/outside/webroot';
 
 /**
  * Settings:
@@ -290,7 +249,7 @@ $settings['config_sync_directory'] = '../config/sync';
  *   $settings['hash_salt'] = file_get_contents('/home/example/salt.txt');
  * @endcode
  */
-$settings['hash_salt'] = '';
+$settings['hash_salt'] = 'ZdkArPTOvzH228Yj4pCSKKcJvg-qMdDQ-1bMbGUsKf7y25F8Ik0u1KJUHgdPIXYJggOWdyJarA';
 
 /**
  * Deployment identifier.
@@ -314,6 +273,22 @@ $settings['hash_salt'] = '';
  * TRUE back to a FALSE!
  */
 $settings['update_free_access'] = FALSE;
+
+/**
+ * Fallback to HTTP for Update Manager and for fetching security advisories.
+ *
+ * If your site fails to connect to updates.drupal.org over HTTPS (either when
+ * fetching data on available updates, or when fetching the feed of critical
+ * security announcements), you may uncomment this setting and set it to TRUE to
+ * allow an insecure fallback to HTTP. Note that doing so will open your site up
+ * to a potential man-in-the-middle attack. You should instead attempt to
+ * resolve the issues before enabling this option.
+ * @see https://www.drupal.org/docs/system-requirements/php-requirements#openssl
+ * @see https://en.wikipedia.org/wiki/Man-in-the-middle_attack
+ * @see \Drupal\update\UpdateFetcher
+ * @see \Drupal\system\SecurityAdvisories\SecurityAdvisoriesFetcher
+ */
+# $settings['update_fetch_with_http_fallback'] = TRUE;
 
 /**
  * External access proxy settings:
@@ -379,17 +354,20 @@ $settings['update_free_access'] = FALSE;
  * Sets which headers to trust from your reverse proxy.
  *
  * Common values are:
- * - \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_ALL
+ * - \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR
+ * - \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST
+ * - \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT
+ * - \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO
  * - \Symfony\Component\HttpFoundation\Request::HEADER_FORWARDED
  *
  * Note the default value of
  * @code
- * \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_ALL | \Symfony\Component\HttpFoundation\Request::HEADER_FORWARDED
+ * \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO | \Symfony\Component\HttpFoundation\Request::HEADER_FORWARDED
  * @endcode
  * is not secure by default. The value should be set to only the specific
  * headers the reverse proxy uses. For example:
  * @code
- * \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_ALL
+ * \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO
  * @endcode
  * This would trust the following headers:
  * - X_FORWARDED_FOR
@@ -397,11 +375,14 @@ $settings['update_free_access'] = FALSE;
  * - X_FORWARDED_PROTO
  * - X_FORWARDED_PORT
  *
- * @see \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_ALL
+ * @see \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR
+ * @see \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST
+ * @see \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT
+ * @see \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO
  * @see \Symfony\Component\HttpFoundation\Request::HEADER_FORWARDED
  * @see \Symfony\Component\HttpFoundation\Request::setTrustedProxies
  */
-# $settings['reverse_proxy_trusted_headers'] = \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_ALL | \Symfony\Component\HttpFoundation\Request::HEADER_FORWARDED;
+# $settings['reverse_proxy_trusted_headers'] = \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO | \Symfony\Component\HttpFoundation\Request::HEADER_FORWARDED;
 
 
 /**
@@ -598,6 +579,21 @@ $settings['update_free_access'] = FALSE;
 # ini_set('pcre.recursion_limit', 200000);
 
 /**
+ * Add Permissions-Policy header to disable Google FLoC.
+ *
+ * By default, Drupal sends the 'Permissions-Policy: interest-cohort=()' header
+ * to disable Google's Federated Learning of Cohorts feature, introduced in
+ * Chrome 89.
+ *
+ * See https://en.wikipedia.org/wiki/Federated_Learning_of_Cohorts for more
+ * information about FLoC.
+ *
+ * If you don't wish to disable FLoC in Chrome, you can set this value
+ * to FALSE.
+ */
+# $settings['block_interest_cohort'] = TRUE;
+
+/**
  * Configuration overrides.
  *
  * To globally override specific configuration values for this site,
@@ -756,11 +752,6 @@ $settings['entity_update_backup'] = TRUE;
  */
 $settings['migrate_node_migrate_type_classic'] = FALSE;
 
-// Automatically generated include for settings managed by ddev.
-if (file_exists(__DIR__ . '/settings.ddev.php') && getenv('IS_DDEV_PROJECT') == 'true') {
-  include __DIR__ . '/settings.ddev.php';
-}
-
 /**
  * Load local development override configuration, if available.
  *
@@ -774,7 +765,15 @@ if (file_exists(__DIR__ . '/settings.ddev.php') && getenv('IS_DDEV_PROJECT') == 
  *
  * Keep this code block at the end of this file to take full effect.
  */
-#
-# if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
-#   include $app_root . '/' . $site_path . '/settings.local.php';
-# }
+
+if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
+  include $app_root . '/' . $site_path . '/settings.local.php';
+}
+$databases['default']['default'] = array (
+  'database' => '/tmp/druxt-module-template-drupal-site.sqlite',
+  'prefix' => '',
+  'driver' => 'sqlite',
+  'namespace' => 'Drupal\\sqlite\\Driver\\Database\\sqlite',
+  'autoload' => 'core/modules/sqlite/src/Driver/Database/sqlite/',
+);
+$settings['config_sync_directory'] = 'sites/default/files/config_7IXGiJzXDGKijFs8xut48e66jUXWpzU_GcDm-AOl-nrH86w3s4hyzQVMFJ6U36Sl4QwnOz-oDQ/sync';

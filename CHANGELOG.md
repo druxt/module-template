@@ -26,6 +26,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Visual regression with Playwright, and merge-request automation that posts
   baseline, render and diff for each failure.
 - A devcontainer covering VS Code, Codespaces and DevPod.
+- The example backend on Drupal 11, provisioned without Docker from a fresh
+  `site:install` on SQLite, and generated and tested in both pipelines. The
+  Drupal 9 site with its committed Tome export is gone.
 - `AGENTS.md` and `CONTRIBUTING.md`.
 
 ### Changed

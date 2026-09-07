@@ -48,11 +48,14 @@ wholesale is worse than it looks, because you inherit this template's coverage f
 ## Commands
 
 ```bash
-npm install          # dependencies, and enables the git hooks
-npm run build        # build the module
-npm test             # unit tests, coverage floor enforced
-npm run lint         # every linter
-npm run test:e2e     # Playwright against the example application
+npm install            # dependencies, and enables the git hooks
+npm run build          # build the module
+npm test               # unit tests, coverage floor enforced
+npm run lint           # every linter except prose
+npm run lint:prose     # Vale, after `npm run lint:prose:install` once
+npm run example:setup  # Drupal 11 backend on SQLite, then the example's dependencies
+npm run example:dev    # the example on http://localhost:3000
+npm run test:e2e       # Playwright against the example, backend up
 ```
 
 `.mise.toml` pins the toolchain and defines the same commands as tasks, so with
@@ -61,8 +64,11 @@ runs.
 
 ## The example application
 
-`example/` holds a Drupal backend and a Nuxt application that loads the module.
-The visual and end-to-end tests run against it. See `example/README.md`.
+`example/` holds a Drupal 11 backend and a Nuxt application that loads the
+module. `npm run example:setup` provisions the backend without Docker, on
+SQLite, with PHP 8.3 or later and Composer on the host; the dev container has
+both. The end-to-end and visual tests run against the generated example. See
+`example/README.md`.
 
 ## Things worth knowing before you change them
 

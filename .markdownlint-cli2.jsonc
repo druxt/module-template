@@ -16,6 +16,11 @@
     "dist/**",
     "coverage/**",
     "example/**/node_modules/**",
+    "example/drupal/vendor/**",
+    "example/drupal/web/**",
+    "example/nuxt/dist/**",
+    "example/nuxt/.nuxt/**",
+    ".vale/**",
     "CHANGELOG.md",
     ".changeset/**"
   ]

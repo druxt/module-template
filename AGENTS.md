@@ -35,7 +35,7 @@ Druxt repository standard.
 | ------------------ | ----------------------------------------------------------------------- |
 | `src/`             | The module. `index.js` is the Nuxt module, `components/` its components |
 | `test/`            | Unit tests. `test/e2e/` is Playwright, and is not run by `npm test`     |
-| `example/`         | A Drupal backend and a Nuxt application that loads the module           |
+| `example/`         | Drupal 11 on SQLite and a Nuxt application that loads the module        |
 | `scripts/`         | Repository tooling, excluded from the package                           |
 | `.githooks/`       | Committed hooks, enabled by `npm install`                               |
 | `.gitlab/scripts/` | Content checks and merge-request automation, copied from the standard   |
@@ -48,7 +48,9 @@ npm run build        # siroc
 npm test             # jest, coverage floor enforced
 npm run lint         # every linter except prose
 npm run lint:prose   # Vale, after `npm run lint:prose:install`
-npm run test:e2e     # Playwright, needs the example application
+npm run example:setup  # Drupal 11 backend on SQLite, then the example's dependencies
+npm run example:dev    # the example on http://localhost:3000
+npm run test:e2e       # Playwright against the example, backend up
 ```
 
 ## Toolchain

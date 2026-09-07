@@ -14,15 +14,23 @@ fi
 # The rest is for a person at a prompt.
 case $- in *i*) ;; *) return 0 2>/dev/null || exit 0 ;; esac
 
-cat <<'EOF'
+backend="not started"
+if [ -f "${WORKSPACE_ROOT:-$PWD}/example/.env" ]; then
+  backend="$(sed -n 's/^BASE_URL=//p' "${WORKSPACE_ROOT:-$PWD}/example/.env" | head -1)"
+  backend="${backend:-not started}"
+fi
+
+cat <<EOF
 
 Druxt module template
-  npm run build      Build the module
-  npm test           Unit tests, with the coverage floor enforced
-  npm run lint       Every linter except prose
-  npm run lint:prose Vale, after `npm run lint:prose:install`
-  npm run test:e2e   Playwright against the example application
+  npm run build         Build the module
+  npm test              Unit tests, with the coverage floor enforced
+  npm run lint          Every linter except prose
+  npm run lint:prose    Vale, after \`npm run lint:prose:install\`
 
-The example application needs a Drupal backend. See example/README.md.
+Example application, backend: ${backend}
+  npm run example:dev   Nuxt on http://localhost:3000 with the module linked
+  npm run test:e2e      Playwright against the example
+  npm run example:info  Backend details; example:stop and example:start
 
 EOF
