@@ -15,12 +15,21 @@ npm install
 echo "Enabling git hooks..."
 git config core.hooksPath .githooks
 
+# OpenSSH forwards the host's LANG and LC_*, and bash warns on every start
+# when that locale is not generated here. This covers the usual English
+# ones before the shell starts; shell-init.sh falls back for anything else.
+echo "Generating the English locales hosts commonly send over SSH..."
+sudo apt-get update -qq > /dev/null
+sudo apt-get install -y -qq locales > /dev/null
+sudo sed -i -E 's/^# (en_(AU|CA|GB|IE|NZ|US)\.UTF-8 UTF-8)/\1/' /etc/locale.gen
+sudo locale-gen > /dev/null
+
+# Sourced from ~/.bashrc rather than run once here, so every new terminal
+# gets the locale fix and the summary, not only the creation log.
+echo "Installing the shell locale fallback and welcome..."
+if ! grep -qF '.devcontainer/shell-init.sh' ~/.bashrc; then
+  printf '\n# Dev container shell setup: locale fallback and welcome.\nexport WORKSPACE_ROOT=%q\n[ -f "$WORKSPACE_ROOT/.devcontainer/shell-init.sh" ] && . "$WORKSPACE_ROOT/.devcontainer/shell-init.sh"\n' "$PWD" >> ~/.bashrc
+fi
+
 echo
-echo "Ready."
-echo
-echo "  npm run build     build the module"
-echo "  npm test          unit tests, with the coverage floor enforced"
-echo "  npm run lint      every linter"
-echo "  npm run test:e2e  Playwright against the example application"
-echo
-echo "The example application needs a Drupal backend. See example/README.md."
+echo "Ready. Open a new terminal for the summary of commands."
