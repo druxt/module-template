@@ -16,19 +16,24 @@ echo "Installing PHP extensions and system packages..."
 # apt-get update fails on it. Nothing here uses apt's Yarn; corepack does that.
 sudo rm -f /etc/apt/sources.list.d/yarn.list
 sudo apt-get update -qq > /dev/null
-sudo apt-get install -y -qq libpng-dev libjpeg-dev libfreetype6-dev libicu-dev libzip-dev sqlite3 > /dev/null
+# python3 and build-essential: the image's Python is the minimal package, and
+# node-gyp needs the full standard library to build vue-jest's deasync.
+sudo apt-get install -y -qq libpng-dev libjpeg-dev libfreetype6-dev libicu-dev libzip-dev sqlite3 python3 python3-setuptools build-essential > /dev/null
 # sudo resets the environment, and the extension scripts need PHP_INI_DIR to
 # find conf.d.
 PHP_INI_DIR="${PHP_INI_DIR:-/usr/local/etc/php}"
-sudo env PHP_INI_DIR="$PHP_INI_DIR" docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
-sudo env PHP_INI_DIR="$PHP_INI_DIR" docker-php-ext-install -j"$(nproc)" gd intl zip > /dev/null
 # The image starts Xdebug on every request, so each CLI call warns that no
 # debugger is listening. Trigger mode keeps it available on demand.
 echo 'xdebug.start_with_request = trigger' | sudo tee "$PHP_INI_DIR/conf.d/zz-xdebug-trigger.ini" > /dev/null
+sudo env PHP_INI_DIR="$PHP_INI_DIR" docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
+sudo env PHP_INI_DIR="$PHP_INI_DIR" docker-php-ext-install -j"$(nproc)" gd intl zip > /dev/null
 php -r "exit(extension_loaded('gd') && extension_loaded('intl') && extension_loaded('zip') ? 0 : 1);" || { echo "PHP extensions failed to load" >&2; exit 1; }
 
 echo "Installing dependencies..."
 npm install
+
+echo "Installing the Playwright browser for the end-to-end tests..."
+npx playwright install --with-deps chromium > /dev/null
 
 echo "Building the module, which the example links to by path..."
 npm run build
