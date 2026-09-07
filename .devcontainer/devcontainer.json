@@ -1,12 +1,18 @@
 {
   "name": "Druxt module",
   // PHP for the example's Drupal backend, provisioned without Docker by
-  // example/drupal/.devtools. Node 16 for the module comes from the feature
-  // below: Nuxt 2 builds on webpack 4, which does not run on a newer Node.
-  "image": "mcr.microsoft.com/devcontainers/php:1-8.4-bookworm",
+  // example/drupal/.devtools. The PHP feature builds against trixie's
+  // libsqlite3, which meets Drupal 11's 3.45 minimum; the PHP image is on
+  // bookworm's 3.40 and cannot install it. Node 16 for the module comes from
+  // its feature: Nuxt 2 builds on webpack 4, which does not run on a newer Node.
+  "image": "mcr.microsoft.com/devcontainers/base:trixie",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "16.20.1"
+    },
+    "ghcr.io/devcontainers/features/php:1": {
+      "version": "8.4",
+      "installComposer": true
     },
     "ghcr.io/devcontainers/features/github-cli:1": {},
     // Installed through gh-release rather than a mise feature: the

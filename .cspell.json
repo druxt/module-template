@@ -30,5 +30,13 @@
     "example/nuxt/.nuxt/"
   ],
   "useGitignore": true,
-  "words": ["deasync", "distutils", "setuptools"]
+  "words": [
+    "deasync",
+    "distutils",
+    "libwebp",
+    "phpize",
+    "setuptools",
+    "trixie",
+    "webp"
+  ]
 }

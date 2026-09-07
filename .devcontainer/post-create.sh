@@ -9,25 +9,39 @@ set -euo pipefail
 echo "Trusting this repository's .mise.toml..."
 mise trust
 
-# The php image has the core extensions Drupal needs except gd, intl and
-# zip. sqlite3 is the CLI drush uses to reset the throwaway database.
-echo "Installing PHP extensions and system packages..."
-# The php image ships a Yarn apt source whose signing key has rotated, and
-# apt-get update fails on it. Nothing here uses apt's Yarn; corepack does that.
-sudo rm -f /etc/apt/sources.list.d/yarn.list
+# PHP comes from the dev container PHP feature, built from source against
+# trixie's libsqlite3: Drupal 11 needs 3.45 or later. The feature leaves gd
+# out, and Drupal's installer requires it, so gd is built from PHP's own
+# source tree below. sqlite3 is the CLI drush uses to reset the throwaway
+# database.
+echo "Installing build tooling and image libraries..."
 sudo apt-get update -qq > /dev/null
-# python3 and build-essential: the image's Python is the minimal package, and
-# node-gyp needs the full standard library to build vue-jest's deasync.
-sudo apt-get install -y -qq libpng-dev libjpeg-dev libfreetype6-dev libicu-dev libzip-dev sqlite3 python3 python3-setuptools build-essential > /dev/null
-# sudo resets the environment, and the extension scripts need PHP_INI_DIR to
-# find conf.d.
-PHP_INI_DIR="${PHP_INI_DIR:-/usr/local/etc/php}"
-# The image starts Xdebug on every request, so each CLI call warns that no
-# debugger is listening. Trigger mode keeps it available on demand.
-echo 'xdebug.start_with_request = trigger' | sudo tee "$PHP_INI_DIR/conf.d/zz-xdebug-trigger.ini" > /dev/null
-sudo env PHP_INI_DIR="$PHP_INI_DIR" docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
-sudo env PHP_INI_DIR="$PHP_INI_DIR" docker-php-ext-install -j"$(nproc)" gd intl zip > /dev/null
-php -r "exit(extension_loaded('gd') && extension_loaded('intl') && extension_loaded('zip') ? 0 : 1);" || { echo "PHP extensions failed to load" >&2; exit 1; }
+# python3-setuptools: trixie's Python 3.13 has no distutils, and the node-gyp
+# bundled with Node 16's npm still imports it when vue-jest's deasync builds.
+sudo apt-get install -y -qq python3 python3-setuptools build-essential sqlite3 libjpeg-dev libpng-dev libwebp-dev libfreetype-dev zlib1g-dev > /dev/null
+
+CONF_DIR=$(php --ini | grep 'Scan for additional .ini files' | sed 's/.*: *//')
+
+# The feature ships Xdebug active on every request, so each CLI call would
+# warn that no debugger is listening. Trigger mode keeps it available on demand.
+echo 'xdebug.start_with_request = trigger' | sudo tee "$CONF_DIR/zz-xdebug-trigger.ini" > /dev/null
+
+echo "Building the gd extension from PHP's source tree..."
+PHP_FULL_VERSION=$(php -r 'echo PHP_VERSION;')
+PHP_SRC_TMP="$(mktemp -d)"
+trap 'rm -rf "$PHP_SRC_TMP"' EXIT
+mkdir -p "$PHP_SRC_TMP/gd"
+curl -fsSL "https://www.php.net/distributions/php-${PHP_FULL_VERSION}.tar.gz" -o "$PHP_SRC_TMP/php-src.tar.gz"
+tar -xzf "$PHP_SRC_TMP/php-src.tar.gz" -C "$PHP_SRC_TMP/gd" --strip-components=3 "php-${PHP_FULL_VERSION}/ext/gd"
+(
+  cd "$PHP_SRC_TMP/gd"
+  phpize > /dev/null
+  ./configure --with-jpeg --with-webp --with-freetype > /dev/null
+  make -j"$(nproc)" > /dev/null
+  sudo make install > /dev/null
+)
+echo 'extension=gd' | sudo tee "$CONF_DIR/gd.ini" > /dev/null
+php -r "exit(extension_loaded('gd') && extension_loaded('pdo_sqlite') ? 0 : 1);" || { echo "gd or pdo_sqlite is not loaded" >&2; exit 1; }
 
 echo "Installing dependencies..."
 npm install
