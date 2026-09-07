@@ -273,7 +273,11 @@ example:generate:
     PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
     VISUAL_RESULTS_DIR: test-results
   before_script:
-    - !reference [.node, before_script]
+    - !reference [default, before_script]
+    # This image ships a newer Node than the project's, and vue-jest's deasync
+    # cannot build against it. Nothing here needs a native module: the tests
+    # run Playwright against a static server, so install scripts are skipped.
+    - npm ci --cache .npm --prefer-offline --ignore-scripts
     - npm run serve &
     - sleep 1 && curl -sf http://127.0.0.1:3000/ > /dev/null
 

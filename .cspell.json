@@ -29,5 +29,6 @@
     "example/nuxt/dist/",
     "example/nuxt/.nuxt/"
   ],
-  "useGitignore": true
+  "useGitignore": true,
+  "words": ["deasync", "distutils", "setuptools"]
 }
