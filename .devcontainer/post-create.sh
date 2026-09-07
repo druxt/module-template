@@ -6,6 +6,9 @@
 # works on a clean container is a step that fails the second time.
 set -euo pipefail
 
+echo "Trusting this repository's .mise.toml..."
+mise trust
+
 echo "Installing dependencies..."
 npm install
 

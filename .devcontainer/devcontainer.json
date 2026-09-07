@@ -3,12 +3,28 @@
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-16-bullseye",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers-contrib/features/mise:1": {}
+    // Installed through gh-release rather than a mise feature: the
+    // devcontainers-contrib registry that hosted one is gone, and the
+    // devcontainers-extra one asks for the "latest" jdx/mise release with
+    // no tag filter, which now resolves to a vfox-* release with no asset.
+    // The regex keeps this on mise's own v-tags. Same setup as druxt.js.
+    "ghcr.io/devcontainers-extra/features/gh-release:1": {
+      "repo": "jdx/mise",
+      "binaryNames": "mise",
+      "assetRegex": ".tar.gz$",
+      "releaseTagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    }
+  },
+  "containerEnv": {
+    // Node comes from the image; .mise.toml's pin is for host users.
+    // Without this, `mise install` builds Node from source in here.
+    "MISE_DISABLE_TOOLS": "node"
   },
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {
     "vscode": {
       "extensions": [
+        "hverlin.mise-vscode",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "davidanson.vscode-markdownlint",
@@ -17,6 +33,10 @@
         "editorconfig.editorconfig"
       ],
       "settings": {
+        // Where the gh-release feature puts the binary. The extension's
+        // default bare "mise" is treated as workspace-relative and
+        // re-prompts for approval on every reload.
+        "mise.binPath": "/usr/local/bin/mise",
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "eslint.validate": ["javascript", "vue"]
