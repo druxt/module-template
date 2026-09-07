@@ -12,6 +12,9 @@ mise trust
 # The php image has the core extensions Drupal needs except gd, intl and
 # zip. sqlite3 is the CLI drush uses to reset the throwaway database.
 echo "Installing PHP extensions and system packages..."
+# The php image ships a Yarn apt source whose signing key has rotated, and
+# apt-get update fails on it. Nothing here uses apt's Yarn; corepack does that.
+sudo rm -f /etc/apt/sources.list.d/yarn.list
 sudo apt-get update -qq > /dev/null
 sudo apt-get install -y -qq libpng-dev libjpeg-dev libfreetype6-dev libicu-dev libzip-dev sqlite3 > /dev/null
 sudo docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
