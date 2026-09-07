@@ -67,7 +67,9 @@ default:
   before_script:
     - !reference [default, before_script]
     - section_start "toolchain" "Installing PHP extensions, Composer and Node"
-    - apt-get update -yqq && apt-get install -yqq git unzip sqlite3 libsqlite3-dev libzip-dev libicu-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev libxml2-dev python3 > /dev/null
+    # python3-setuptools: this image's Python has no distutils, and the node-gyp
+    # bundled with Node 16's npm still imports it when vue-jest's deasync builds.
+    - apt-get update -yqq && apt-get install -yqq git unzip sqlite3 libsqlite3-dev libzip-dev libicu-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev libxml2-dev python3 python3-setuptools build-essential > /dev/null
     - docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
     - docker-php-ext-install -j"$(nproc)" pdo_sqlite intl gd zip opcache > /dev/null
     - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=2.8.6 > /dev/null
