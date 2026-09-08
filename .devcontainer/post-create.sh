@@ -49,8 +49,10 @@ npm install
 # Playwright does not know trixie and falls back to a package list from
 # Ubuntu 20.04, whose font packages no longer exist. Its Ubuntu 24.04 list
 # uses the same t64 names as trixie and every package in it is available here.
+# The platform key carries the architecture.
 echo "Installing the Playwright browser for the end-to-end tests..."
-PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04 npx playwright install --with-deps chromium > /dev/null
+case "$(uname -m)" in aarch64 | arm64) PLAYWRIGHT_ARCH=arm64 ;; *) PLAYWRIGHT_ARCH=x64 ;; esac
+PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="ubuntu24.04-$PLAYWRIGHT_ARCH" npx playwright install --with-deps chromium > /dev/null
 
 echo "Building the module, which the example links to by path..."
 npm run build
