@@ -1,12 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@2/schema.json",
   "entry": [
-    "scripts/serve.mjs",
+    "scripts/serve.js",
     "src/index.js",
     "scripts/*.mjs",
     "test/**/*.test.js"
   ],
-  "project": ["src/**/*.{js,vue}", "scripts/**/*.mjs"],
+  "project": ["src/**/*.{js,vue}", "scripts/**/*.{js,mjs}"],
   "ignoreDependencies": [
     // Invoked by name from .gitlab-ci.yml and .github/workflows, never
     // imported. knip does not parse pipeline YAML.
