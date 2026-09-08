@@ -162,7 +162,7 @@ jobs:
       - name: End-to-end tests against the generated example
         run: |
           npm run serve &
-          sleep 1
+          bash scripts/wait-for-server.sh
           PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
