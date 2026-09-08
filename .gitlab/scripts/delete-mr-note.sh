@@ -26,7 +26,7 @@ url="$(notes_url)"
 existing_id="$(find_note_id "$marker")"
 
 if [ -n "$existing_id" ]; then
-  api_curl --request DELETE "${url}/${existing_id}" > /dev/null
+  api_write --request DELETE "${url}/${existing_id}" > /dev/null
   echo "Deleted merge-request note ${existing_id}"
 else
   echo "No note carries ${marker}; nothing to delete."

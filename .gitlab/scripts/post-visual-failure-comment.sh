@@ -62,7 +62,7 @@ uploads_url="${api}/projects/${project}/uploads"
 # the visual job and on a python one in the workspace's own pipeline.
 upload() {
   local response interpreter
-  response="$(api_curl --request POST --form "file=@$1" "$uploads_url")"
+  response="$(api_write --request POST --form "file=@$1" "$uploads_url")"
   interpreter="$(json_interpreter)" || return 1
   if [ "$interpreter" = "python3" ]; then
     printf '%s' "$response" | python3 -c '

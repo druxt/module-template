@@ -55,8 +55,9 @@ json_interpreter() {
 # The id of the note carrying $1, read from JSON on stdin. Empty when none.
 #
 # Matching on the marker rather than the body means another job's note is
-# never hijacked. An unparseable body yields no id, which makes the caller
-# create a note rather than update an unknown one.
+# never hijacked. Exit 2 says the payload was not a list of notes, which is a
+# different thing from a page that holds no match: treating the two alike let
+# a garbled response post a second copy of a note that already existed.
 note_id_for() {
   local marker="$1" interpreter
   interpreter="$(json_interpreter)" || return 1
@@ -69,9 +70,9 @@ marker = sys.argv[1]
 try:
     notes = json.load(sys.stdin)
 except Exception:
-    notes = []
+    sys.exit(2)
 if not isinstance(notes, list):
-    notes = []
+    sys.exit(2)
 for note in notes:
     if isinstance(note, dict) and marker in (note.get("body") or ""):
         sys.stdout.write(str(note.get("id", "")))
@@ -81,11 +82,11 @@ for note in notes:
     node -e '
 const fs = require("fs");
 const marker = process.argv[1];
-let notes = [];
+let notes;
 try {
-  const parsed = JSON.parse(fs.readFileSync(0, "utf8"));
-  if (Array.isArray(parsed)) notes = parsed;
-} catch { /* an unparseable body means no note to match */ }
+  notes = JSON.parse(fs.readFileSync(0, "utf8"));
+} catch { process.exit(2); }
+if (!Array.isArray(notes)) process.exit(2);
 const match = notes.find((n) => n && n.body && n.body.includes(marker));
 process.stdout.write(match ? String(match.id) : "");
 ' "$marker"
@@ -107,8 +108,20 @@ notes_url() {
 api_curl() {
   # --fail: without it curl exits 0 on 403 or 500 and the caller treats the
   # error body as a result, so a note that was never posted reports success.
-  curl -sS --fail --retry 3 --retry-delay 2 --max-time 30 \
+  curl -sS --fail --connect-timeout 10 --max-time 30 \
     --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" "$@"
+}
+
+# Reading is safe to repeat, so it retries.
+api_read() {
+  api_curl --retry 3 --retry-delay 2 "$@"
+}
+
+# Writing is not safe to repeat. curl resends the body when a connection drops
+# after GitLab accepted the request, which posts the note twice: the one thing
+# these scripts exist to prevent.
+api_write() {
+  api_curl "$@"
 }
 
 # Echo the id of the note carrying the marker, or nothing.
@@ -121,9 +134,9 @@ find_note_id() {
   url="$(notes_url)"
   page=1
   while [ "$page" -le 20 ]; do
-    body="$(api_curl "${url}?per_page=100&page=${page}")" || return 1
+    body="$(api_read "${url}?per_page=100&page=${page}")" || return 1
     case "$body" in '' | '[]') return 0 ;; esac
-    id="$(printf '%s' "$body" | note_id_for "$marker")"
+    id="$(printf '%s' "$body" | note_id_for "$marker")" || return 1
     if [ -n "$id" ]; then
       printf '%s' "$id"
       return 0

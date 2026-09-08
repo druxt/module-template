@@ -30,9 +30,9 @@ url="$(notes_url)"
 existing_id="$(find_note_id "$marker")"
 
 if [ -n "$existing_id" ]; then
-  api_curl --request PUT --form "body=<${body_file}" "${url}/${existing_id}" > /dev/null
+  api_write --request PUT --form "body=<${body_file}" "${url}/${existing_id}" > /dev/null
   echo "Updated merge-request note ${existing_id}"
 else
-  api_curl --request POST --form "body=<${body_file}" "${url}" > /dev/null
+  api_write --request POST --form "body=<${body_file}" "${url}" > /dev/null
   echo "Created merge-request note"
 fi
