@@ -10,7 +10,9 @@ set -euo pipefail
 url="${1:-http://127.0.0.1:3000/}"
 deadline=$(( SECONDS + ${2:-30} ))
 
-until curl -sf -o /dev/null "$url"; do
+# --connect-timeout and --max-time: a socket that accepts and then says nothing
+# would otherwise hold the probe open past the deadline this loop enforces.
+until curl -sf --connect-timeout 2 --max-time 5 -o /dev/null "$url"; do
   if [ "$SECONDS" -ge "$deadline" ]; then
     echo "No answer from ${url} within ${2:-30}s." >&2
     exit 1
