@@ -10,10 +10,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Committed git hooks in `.githooks/`, enabled on install, running the linters
   and unit tests before a commit and Conventional Commits on the message.
-- A GitLab pipeline covering lint, unit tests, visual regression, secret
-  scanning with a detection canary, and a manual preview tunnel.
-- Spell check, Markdown lint, YAML lint, formatting, dead-code detection and a
-  production dependency audit.
+- A GitLab pipeline covering lint, unit tests, end-to-end tests, visual
+  regression, secret scanning with a detection canary, and a manual preview
+  tunnel, with a GitHub Actions workflow running lint, unit tests and the
+  end-to-end suite.
+- Spell check, Markdown lint, YAML lint, formatting, dead-code detection, a
+  production dependency audit, a private-host check, prose linting and a check
+  that no AI tool is credited as an author.
 - An enforced coverage floor, measured from this template's own tests rather
   than aspirational.
 - A private-host lint, so a URL only the author can reach cannot reach a

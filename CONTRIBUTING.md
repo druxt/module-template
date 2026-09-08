@@ -20,7 +20,7 @@ installed, `mise install` gives you the same Node the pipeline uses.
 ## Before you push
 
 ```bash
-npm run lint     # eslint, markdownlint, cspell, private hosts, knip
+npm run lint     # every check below except prose, which needs Vale installed
 npm test         # jest, with the coverage floor enforced
 ```
 
