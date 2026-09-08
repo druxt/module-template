@@ -27,7 +27,7 @@ if [ ! -f "$body_file" ]; then
 fi
 
 url="$(notes_url)"
-existing_id="$(api_curl "${url}?per_page=100" | note_id_for "$marker")"
+existing_id="$(find_note_id "$marker")"
 
 if [ -n "$existing_id" ]; then
   api_curl --request PUT --form "body=<${body_file}" "${url}/${existing_id}" > /dev/null

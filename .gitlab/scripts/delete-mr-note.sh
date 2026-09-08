@@ -23,7 +23,7 @@ marker="${1:?usage: delete-mr-note.sh <marker>}"
 require_token
 
 url="$(notes_url)"
-existing_id="$(api_curl "${url}?per_page=100" | note_id_for "$marker")"
+existing_id="$(find_note_id "$marker")"
 
 if [ -n "$existing_id" ]; then
   api_curl --request DELETE "${url}/${existing_id}" > /dev/null

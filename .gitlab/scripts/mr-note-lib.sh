@@ -105,6 +105,30 @@ notes_url() {
 # site. The token is passed as a header value, never on a URL, so it does not
 # land in a log line that echoes the request target.
 api_curl() {
-  curl -s --retry 3 --retry-delay 2 --max-time 30 \
+  # --fail: without it curl exits 0 on 403 or 500 and the caller treats the
+  # error body as a result, so a note that was never posted reports success.
+  curl -sS --fail --retry 3 --retry-delay 2 --max-time 30 \
     --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" "$@"
+}
+
+# Echo the id of the note carrying the marker, or nothing.
+#
+# The notes endpoint pages, newest first. Reading only the first page misses
+# the marker on a busy merge request, and the caller then posts a duplicate
+# instead of editing the note that is already there.
+find_note_id() {
+  local marker="$1" url page id body
+  url="$(notes_url)"
+  page=1
+  while [ "$page" -le 20 ]; do
+    body="$(api_curl "${url}?per_page=100&page=${page}")" || return 1
+    case "$body" in '' | '[]') return 0 ;; esac
+    id="$(printf '%s' "$body" | note_id_for "$marker")"
+    if [ -n "$id" ]; then
+      printf '%s' "$id"
+      return 0
+    fi
+    page=$((page + 1))
+  done
+  return 0
 }
