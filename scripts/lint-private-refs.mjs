@@ -55,17 +55,53 @@ const PRIVATE_HOST = [
 const URL_HOST =
   /(?:[a-z][a-z0-9+.-]*:\/\/(?:[^/@\s]*@)?|\bgit@)(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9._-]+)/g
 
+/**
+ * The IPv4 address inside an IPv4-mapped IPv6 literal, else the host as given.
+ *
+ * A mapped address has four spellings, compressed or expanded, with the last
+ * 32 bits written as dotted decimal or as two hex groups. Matching the dotted
+ * spelling alone let `[0:0:0:0:0:ffff:0a00:0008]` name a private endpoint that
+ * every pattern below then read as a public one.
+ */
+export function mappedToIpv4(host) {
+  if (!/^[0-9a-f:.]+$/i.test(host) || !host.includes(':')) return host
+
+  // A trailing dotted quad occupies the last two groups. Rewriting it as hex
+  // first means the zero-fill below only ever counts groups.
+  const text = host.replace(
+    /(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/,
+    (_, a, b, c, d) =>
+      [((+a << 8) | +b).toString(16), ((+c << 8) | +d).toString(16)].join(':')
+  )
+
+  const [head, tail] = text.split('::')
+  const left = head ? head.split(':') : []
+  const right = tail === undefined ? [] : tail ? tail.split(':') : []
+  const groups =
+    tail === undefined
+      ? left
+      : left.concat(Array(8 - left.length - right.length).fill('0'), right)
+
+  if (groups.length !== 8 || groups.some((g) => !/^[0-9a-f]{1,4}$/i.test(g))) {
+    return host
+  }
+  const value = groups.map((g) => parseInt(g, 16))
+  if (!value.slice(0, 5).every((g) => g === 0) || value[5] !== 0xffff) {
+    return host
+  }
+  return [value[6] >> 8, value[6] & 0xff, value[7] >> 8, value[7] & 0xff].join(
+    '.'
+  )
+}
+
 /** Every private host referenced by `text`, with the line it sits on. */
 export function findPrivateRefs(text) {
   const found = []
   text.split('\n').forEach((line, index) => {
     for (const match of line.matchAll(URL_HOST)) {
-      // An IPv4-mapped IPv6 literal such as [::ffff:10.0.0.8] carries an
-      // RFC1918 address that none of the patterns below would otherwise see.
-      const host = match[1]
-        .replace(/^\[|\]$/g, '')
-        .replace(/[.:]+$/, '')
-        .replace(/^::ffff:(?=\d{1,3}(\.\d{1,3}){3}$)/i, '')
+      const host = mappedToIpv4(
+        match[1].replace(/^\[|\]$/g, '').replace(/[.:]+$/, '')
+      )
       if (ALLOWED.some((pattern) => pattern.test(host))) {
         continue
       }

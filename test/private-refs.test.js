@@ -38,8 +38,15 @@ describe('findPrivateRefs', () => {
   })
 
   test('finds an RFC1918 address inside an IPv4-mapped IPv6 literal', () => {
+    // Every spelling of the same address: compressed or expanded, with the
+    // last 32 bits dotted or hexadecimal.
     expect(hostsIn('https://[::ffff:10.0.0.8]/x')).toEqual(['10.0.0.8'])
-    expect(hostsIn('http://[::ffff:192.168.1.1]/')).toEqual(['192.168.1.1'])
+    expect(hostsIn('https://[::ffff:0a00:0008]/x')).toEqual(['10.0.0.8'])
+    expect(hostsIn('https://[0:0:0:0:0:ffff:10.0.0.8]/x')).toEqual(['10.0.0.8'])
+    expect(hostsIn('https://[0:0:0:0:0:ffff:0a00:0008]/x')).toEqual([
+      '10.0.0.8',
+    ])
+    expect(hostsIn('http://[::ffff:c0a8:0101]/')).toEqual(['192.168.1.1'])
   })
 
   test('finds a link-local IPv6 address', () => {
@@ -50,6 +57,7 @@ describe('findPrivateRefs', () => {
     expect(hostsIn('https://druxtjs.org/docs')).toEqual([])
     expect(hostsIn('http://[2001:db8::1]/')).toEqual([])
     expect(hostsIn('http://[::ffff:8.8.8.8]/')).toEqual([])
+    expect(hostsIn('http://[::ffff:0808:0808]/')).toEqual([])
   })
 
   test('leaves the local development hosts alone', () => {
