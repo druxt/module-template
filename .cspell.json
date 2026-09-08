@@ -31,8 +31,11 @@
   ],
   "useGitignore": true,
   "words": [
+    "coderabbit",
     "deasync",
     "distutils",
+    "docroot",
+    "drush",
     "libwebp",
     "phpize",
     "setuptools",
