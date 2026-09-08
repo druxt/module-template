@@ -50,15 +50,22 @@ const PRIVATE_HOST = [
  * remote usually carries it - `https://oauth2:TOKEN@host/path` - and
  * capturing `oauth2` instead of the host let the whole URL through.
  */
+// The bracket class takes dots as well as hex: an IPv4-mapped literal such as
+// [::ffff:10.0.0.8] is a bracketed host that carries an RFC1918 address.
 const URL_HOST =
-  /(?:[a-z][a-z0-9+.-]*:\/\/(?:[^/@\s]*@)?|\bgit@)(\[[0-9A-Fa-f:]+\]|[A-Za-z0-9._-]+)/g
+  /(?:[a-z][a-z0-9+.-]*:\/\/(?:[^/@\s]*@)?|\bgit@)(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9._-]+)/g
 
 /** Every private host referenced by `text`, with the line it sits on. */
 export function findPrivateRefs(text) {
   const found = []
   text.split('\n').forEach((line, index) => {
     for (const match of line.matchAll(URL_HOST)) {
-      const host = match[1].replace(/^\[|\]$/g, '').replace(/[.:]+$/, '')
+      // An IPv4-mapped IPv6 literal such as [::ffff:10.0.0.8] carries an
+      // RFC1918 address that none of the patterns below would otherwise see.
+      const host = match[1]
+        .replace(/^\[|\]$/g, '')
+        .replace(/[.:]+$/, '')
+        .replace(/^::ffff:(?=\d{1,3}(\.\d{1,3}){3}$)/i, '')
       if (ALLOWED.some((pattern) => pattern.test(host))) {
         continue
       }
