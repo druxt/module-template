@@ -94,6 +94,27 @@ if (!$ready) {
 }
 PASS('Server started successfully.');
 
+// A listening socket is not proof that this script's server owns it. When a
+// stale server or an unrelated service already holds the port, the checks
+// below read that service and report a site this checkout never started.
+TASK('Confirming that the server on port %s is ours.', $webserver_port);
+$pid = is_file(server_pid_file()) ? trim((string) file_get_contents(server_pid_file())) : '';
+// posix_kill is the liveness test where the extension is compiled in, and
+// /proc covers the images where it is not.
+$alive = $pid !== '' && ctype_digit($pid) && (function_exists('posix_kill')
+  ? @posix_kill((int) $pid, 0)
+  : is_dir('/proc/' . $pid));
+if (!$alive) {
+  FAIL('The PHP server exited after starting. Check the log at /tmp/druxt-module-template-drupal-php-server.log.');
+}
+$port_owners = [];
+@exec(sprintf('lsof -ti:%s 2>/dev/null', escapeshellarg($webserver_port)), $port_owners);
+$port_owners = array_map('trim', $port_owners);
+if ($port_owners !== [] && !in_array($pid, $port_owners, TRUE)) {
+  FAIL(sprintf('Port %s is held by another process (%s), not by the server this script started.', $webserver_port, implode(', ', $port_owners)));
+}
+PASS('The server on port %s is ours (pid %s).', $webserver_port, $pid);
+
 TASK('Checking that the server can serve content.');
 // Generous timeout: the very first request pays for a cold Drupal
 // bootstrap (container build, twig compile) with no opcache.
