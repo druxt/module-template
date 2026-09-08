@@ -33,7 +33,14 @@ const TYPES = {
  * generated route. Anything that escapes the root resolves to nothing.
  */
 function resolveFile(root, urlPath) {
-  const decoded = decodeURIComponent(urlPath.split('?')[0])
+  // A malformed escape such as /%zz throws URIError, and an uncaught throw in
+  // the request handler takes the whole server down mid test run.
+  let decoded
+  try {
+    decoded = decodeURIComponent(urlPath.split('?')[0])
+  } catch {
+    return null
+  }
   const candidate = resolve(root, '.' + normalize('/' + decoded))
   if (candidate !== root && !candidate.startsWith(root + sep)) return null
   if (existsSync(candidate) && statSync(candidate).isDirectory()) {

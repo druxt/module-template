@@ -45,6 +45,10 @@ describe('resolveFile', () => {
   test('a missing path resolves to nothing', () => {
     expect(resolveFile(root, '/missing')).toBeNull()
   })
+
+  test('a malformed percent escape resolves to nothing', () => {
+    expect(resolveFile(root, '/%zz')).toBeNull()
+  })
 })
 
 describe('serve', () => {
@@ -69,5 +73,14 @@ describe('serve', () => {
   test('answers 404 for a route that was not generated', async () => {
     const missing = await request(`${base}/nope`)
     expect(missing.status).toBe(404)
+  })
+
+  test('survives a malformed percent escape', async () => {
+    const malformed = await request(`${base}/%zz`)
+    expect(malformed.status).toBe(404)
+    // The second request is the point: an unguarded decode took the server
+    // down, so everything after it failed to connect.
+    const after = await request(`${base}/about/`)
+    expect(after.status).toBe(200)
   })
 })
