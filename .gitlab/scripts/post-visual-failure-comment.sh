@@ -61,25 +61,29 @@ uploads_url="${api}/projects/${project}/uploads"
 # Same two-interpreter reason as mr-note-lib.sh: this runs on a node image in
 # the visual job and on a python one in the workspace's own pipeline.
 upload() {
-  local response interpreter
-  response="$(api_write --request POST --form "file=@$1" "$uploads_url")"
+  local response interpreter markdown
+  response="$(api_write --request POST --form "file=@$1" "$uploads_url")" || return 1
   interpreter="$(json_interpreter)" || return 1
   if [ "$interpreter" = "python3" ]; then
-    printf '%s' "$response" | python3 -c '
+    markdown="$(printf '%s' "$response" | python3 -c '
 import json, sys
 try:
     sys.stdout.write(json.load(sys.stdin).get("markdown") or "")
 except Exception:
     pass
-'
+')"
   else
-    printf '%s' "$response" | node -e '
+    markdown="$(printf '%s' "$response" | node -e '
 const fs = require("fs");
 let markdown = "";
 try { markdown = JSON.parse(fs.readFileSync(0, "utf8")).markdown || ""; } catch {}
 process.stdout.write(markdown);
-'
+')"
   fi
+  # No markdown means the upload did not produce a usable link. Returning it
+  # anyway puts an empty cell in the table, which reads as a passing check.
+  [ -n "$markdown" ] || return 1
+  printf '%s' "$markdown"
 }
 
 body_file="$(mktemp)"
@@ -92,18 +96,18 @@ body_file="$(mktemp)"
     expected="${actual%-actual.png}-expected.png"
     diff_image="${actual%-actual.png}-diff.png"
 
-    actual_md="$(upload "$actual")"
+    actual_md="$(upload "$actual")" || actual_md='_upload failed_'
 
     # A new snapshot has no committed baseline, and that is exactly the case a
     # reviewer needs to see. Report it as missing rather than failing here.
     expected_md="_no committed baseline_"
     if [ -f "$expected" ]; then
-      expected_md="$(upload "$expected")"
+      expected_md="$(upload "$expected")" || expected_md='_upload failed_'
     fi
 
     diff_md="_not produced_"
     if [ -f "$diff_image" ]; then
-      diff_md="$(upload "$diff_image")"
+      diff_md="$(upload "$diff_image")" || diff_md='_upload failed_'
     fi
 
     echo "#### \`${label}\`"
