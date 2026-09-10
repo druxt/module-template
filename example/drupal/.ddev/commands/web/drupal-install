@@ -1,8 +1,15 @@
 #!/bin/bash
 
-## Description: Install Drupal
+## Description: Install the example backend
 ## Usage: drupal-install
 ## Example: "ddev drupal-install"
-
+#
+# The same site .devtools/provision builds without Docker, on DDEV's MySQL.
+set -euo pipefail
 composer install
-drush -y tome:install
+drush -y site:install --site-name='druxt-module-template' standard
+drush -y recipe:apply /var/www/html/web/core/recipes/article_content_type
+drush -y recipe:apply /var/www/html/web/core/recipes/page_content_type
+drush -y cache:rebuild
+drush -y pm:enable druxt
+drush role:perm:add anonymous 'access druxt resources'

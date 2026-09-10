@@ -2,11 +2,20 @@
   "name": "druxt-module-template-example",
   "version": "0.0.0",
   "scripts": {
-    "dev": "nuxt dev"
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "start": "nuxt start"
   },
   "dependencies": {
-    "druxt": "latest",
-    "druxt-module-template": "link:../..",
-    "nuxt": "latest"
+    "consola": "2.15.3",
+    "druxt": "^0.21.0",
+    "druxt-module-template": "file:../..",
+    "nuxt": "2.15.8"
+  },
+  "private": true,
+  "packageManager": "npm@8.19.4",
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "7.21.11"
   }
 }

@@ -1,33 +1,31 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Something does not work as documented
 title: ''
-labels: ''
+labels: bug
 assignees: ''
-
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## What happened
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+## What you expected
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## How to reproduce
 
-**Media**
-If applicable, add screenshots or video to help explain your problem.
+1.
+2.
+3.
 
-**Your Environment (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+## Versions
 
-**Additional context**
-Add any other context about the problem here.
+|        |     |
+| ------ | --- |
+| Module |     |
+| Druxt  |     |
+| Nuxt   |     |
+| Node   |     |
+| Drupal |     |
+
+## Anything else
+
+Logs, screenshots, or a link to a reproduction.

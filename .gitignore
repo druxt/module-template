@@ -104,3 +104,18 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Test and lint output
+coverage/
+reports/
+test-results/
+playwright-report/
+
+# Playwright's own browser cache
+.playwright/
+
+# Vale binary and styles, installed by .gitlab/scripts/install-vale.sh
+.vale/
+
+# Written by example/drupal/.devtools/start with the backend URL
+example/.env

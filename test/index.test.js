@@ -17,7 +17,7 @@ describe('DruxtModule Nuxt module', () => {
         hook: jest.fn(),
       },
       options: {},
-      NuxtModule
+      NuxtModule,
     }
   })
 
@@ -32,7 +32,27 @@ describe('DruxtModule Nuxt module', () => {
     // Expect that:
     // - The components:dirs hook was invoked.
     // - One directory is present.
-    expect(mock.nuxt.hook).toHaveBeenCalledWith('components:dirs', expect.any(Function))
+    expect(mock.nuxt.hook).toHaveBeenCalledWith(
+      'components:dirs',
+      expect.any(Function)
+    )
+    expect(dirs.length).toBe(1)
+  })
+
+  test('Init without module options', () => {
+    // The `moduleOptions = {}` default is a branch, and calling the module
+    // with options every time never takes it. Nuxt calls a module with no
+    // options whenever it is registered as a bare string in `buildModules`,
+    // which is how the example application registers this one.
+    const dirs = []
+    mock.nuxt.hook = jest.fn((hook, fn) => fn(dirs))
+
+    NuxtModule.call(mock)
+
+    expect(mock.nuxt.hook).toHaveBeenCalledWith(
+      'components:dirs',
+      expect.any(Function)
+    )
     expect(dirs.length).toBe(1)
   })
 })

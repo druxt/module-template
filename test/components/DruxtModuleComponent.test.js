@@ -9,17 +9,14 @@ const localVue = createLocalVue()
 localVue.component('DruxtWrapper', DruxtWrapper)
 
 // Mount the Vue component.
-const mountComponent = function() {
-  return mount(
-    DruxtModuleComponent,
-    {
-      localVue,
-      mocks: {
-        $fetchState: { pending: true },
-        $route: { meta: { lang: undefined }},
-      }
-    }
-  )
+const mountComponent = function () {
+  return mount(DruxtModuleComponent, {
+    localVue,
+    mocks: {
+      $fetchState: { pending: true },
+      $route: { meta: { lang: undefined } },
+    },
+  })
 }
 
 describe('DruxtModuleComponent', () => {

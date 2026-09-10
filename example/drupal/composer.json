@@ -1,79 +1,85 @@
 {
-  "name": "druxt/module-template",
-  "description": "Drupal 9 codebase for the DruxtModule template example.",
-  "type": "project",
-  "license": "GPL-2.0-or-later",
-  "homepage": "https://druxtjs.org",
-  "support": {
-    "chat": "https://discord.druxtjs.org"
-  },
-  "repositories": [
-    {
-      "type": "composer",
-      "url": "https://packages.drupal.org/8"
-    }
-  ],
-  "require": {
-    "composer/installers": "2.2.0",
-    "drupal-tome/tome_drush": "dev-master",
-    "drupal/core-composer-scaffold": "9.4.8",
-    "drupal/core-project-message": "9.4.8",
-    "drupal/core-recommended": "9.4.8",
-    "drupal/druxt": "1.1.1",
-    "drupal/tome": "1.7.0",
-    "drush/drush": "11.3.2"
-  },
-  "require-dev": {
-    "drupal/core-dev": "9.4.8"
-  },
-  "conflict": {
-    "drupal/drupal": "*"
-  },
-  "minimum-stability": "dev",
-  "prefer-stable": true,
-  "config": {
-    "sort-packages": true,
-    "allow-plugins": {
-      "composer/installers": true,
-      "drupal/core-composer-scaffold": true,
-      "drupal/core-project-message": true,
-      "dealerdirect/phpcodesniffer-composer-installer": true
-    }
-  },
-  "extra": {
-    "drupal-scaffold": {
-      "locations": {
-        "web-root": "web/"
-      }
+    "name": "druxt/module-template-example-backend",
+    "description": "The Drupal backend for the module template's example application.",
+    "type": "project",
+    "license": "MIT",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ],
+    "require": {
+        "composer/installers": "^2.2",
+        "drupal/core-composer-scaffold": "~11",
+        "drupal/core-project-message": "~11",
+        "drupal/core-recommended": "~11",
+        "drupal/druxt": "^1.2.2",
+        "drush/drush": "^13"
     },
-    "installer-paths": {
-      "web/core": [
-        "type:drupal-core"
-      ],
-      "web/libraries/{$name}": [
-        "type:drupal-library"
-      ],
-      "web/modules/contrib/{$name}": [
-        "type:drupal-module"
-      ],
-      "web/profiles/contrib/{$name}": [
-        "type:drupal-profile"
-      ],
-      "web/themes/contrib/{$name}": [
-        "type:drupal-theme"
-      ],
-      "drush/Commands/contrib/{$name}": [
-        "type:drupal-drush"
-      ],
-      "web/modules/custom/{$name}": [
-        "type:drupal-custom-module"
-      ],
-      "web/profiles/custom/{$name}": [
-        "type:drupal-custom-profile"
-      ],
-      "web/themes/custom/{$name}": [
-        "type:drupal-custom-theme"
-      ]
+    "conflict": {
+        "drupal/drupal": "*"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "8.3"
+        },
+        "allow-plugins": {
+            "composer/installers": true,
+            "drupal/core-composer-scaffold": true,
+            "drupal/core-project-message": true,
+            "php-http/discovery": true,
+            "phpstan/extension-installer": true,
+            "tbachert/spi": true,
+            "symfony/runtime": true
+        }
+    },
+    "extra": {
+        "drupal-scaffold": {
+            "locations": {
+                "web-root": "web/"
+            }
+        },
+        "installer-paths": {
+            "web/core": [
+                "type:drupal-core"
+            ],
+            "web/libraries/{$name}": [
+                "type:drupal-library"
+            ],
+            "web/modules/contrib/{$name}": [
+                "type:drupal-module"
+            ],
+            "web/profiles/contrib/{$name}": [
+                "type:drupal-profile"
+            ],
+            "web/themes/contrib/{$name}": [
+                "type:drupal-theme"
+            ],
+            "drush/Commands/contrib/{$name}": [
+                "type:drupal-drush"
+            ],
+            "web/modules/custom/{$name}": [
+                "type:drupal-custom-module"
+            ],
+            "web/profiles/custom/{$name}": [
+                "type:drupal-custom-profile"
+            ],
+            "web/themes/custom/{$name}": [
+                "type:drupal-custom-theme"
+            ]
+        },
+        "drupal-core-project-message": {
+            "include-keys": [
+                "homepage",
+                "support"
+            ],
+            "post-create-project-cmd-message": [
+                "The example backend is installed by .devtools/provision. See ../README.md."
+            ]
+        }
     }
-  }
 }

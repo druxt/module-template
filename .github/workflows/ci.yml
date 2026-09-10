@@ -1,36 +1,174 @@
+---
 name: CI
+
+# The same lint and test set as .gitlab-ci.yml. This repository is mirrored and
+# releases are cut here, so both hosts have to agree. Nothing on this side lints
+# this file: the GitLab pipeline runs actionlint over it in return.
 
 on:
   push:
-    branches: [ main ]
-
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [14.x, 16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
-    - uses: actions/checkout@v2
+      # Actions are pinned to commit SHAs, not tags. A tag is a mutable
+      # reference to code that runs with this repository's credentials.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+          # The attribution and prose checks read the pull request's own
+          # commits, so its base has to be present.
+          fetch-depth: 0
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
 
-    - run: npm i
+      # corepack reads the packageManager field, so the manager the lockfile was
+      # written by is the one that installs it, and this file never names one.
+      - run: corepack enable && corepack prepare --activate
 
-    - run: npm run build
+      - run: npm ci
 
-    - run: npm run lint
+      - run: npm run lint:js
 
-    - run: npm test --reporters=jest-junit --runInBand
+      - run: npm run lint:md
 
-    - name: Codecov
-      uses: codecov/codecov-action@v3.1.1
+      - run: npm run lint:cspell
+
+      - run: npm run lint:knip
+
+      # This repository is public, and its README and example are what people
+      # copy. A host only the author can reach must never reach a tracked file.
+      - run: npm run lint:private
+
+      # The work is the author's. No commit, pull request description or
+      # tracked file may credit an AI tool as author, co-author or generator.
+      - name: Check for AI attribution
+        env:
+          ATTRIBUTION_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          MERGE_REQUEST_DESCRIPTION: ${{ github.event.pull_request.body }}
+        run: bash .gitlab/scripts/check-attribution.sh
+
+      # Project voice over the markdown a change touches, its commit messages
+      # and the pull request description.
+      - name: Lint prose
+        env:
+          PROSE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          MERGE_REQUEST_DESCRIPTION: ${{ github.event.pull_request.body }}
+          PROSE_LINT_GLOB: "!{.changeset,example/drupal}/**"
+        run: |
+          bash .gitlab/scripts/install-vale.sh .vale/bin .vale/styles
+          bash .gitlab/scripts/lint-prose.sh
+
+      - run: npm run lint:audit
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: corepack enable && corepack prepare --activate
+
+      - run: npm ci
+
+      - run: npm run build
+
+      # The coverage floor in jest.config.js is what fails here. Codecov below
+      # adds the per-pull-request view on top and is not the gate.
+      - run: npm test -- --reporters=default --reporters=jest-junit --runInBand
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: test-results
+          path: reports/junit/
+
+      - name: Upload coverage to Codecov
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238  # v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage
+
+  # The example on a real backend: the module is built, the example installs it
+  # by path, Drupal 11 is provisioned from scratch on SQLite, the example is
+  # generated against it and Playwright reads the result. Visual comparisons
+  # are excluded here on purpose: the committed baselines come from the GitLab
+  # runner, and this runner renders differently.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240  # v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, gd, intl, zip, opcache
+          tools: composer:2
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            example/nuxt/package-lock.json
+
+      - run: corepack enable && corepack prepare --activate
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Provision and start the example backend
+        env:
+          WEBSERVER_HOST: 127.0.0.1
+          WEBSERVER_PORT: 8888
+        run: npm run example:assemble && npm run example:provision && npm run example:start
+
+      - name: Backend answers JSON:API
+        run: . ./example/.env && curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'
+
+      - run: npm run example:install
+
+      - run: npm run example:generate
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests against the generated example
+        run: |
+          npm run serve &
+          bash scripts/wait-for-server.sh
+          PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: |
+            test-results/
+            playwright-report/
