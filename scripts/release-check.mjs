@@ -111,7 +111,7 @@ export function checkManifest({ manifest, dir, record, files = true }) {
  * @returns {Promise<object|null>} `{ latest, versions }`, or `null` when npm has no such package.
  */
 export function fetchRecord(name) {
-  const url = `https://registry.npmjs.org/${name.replace('/', '%2f')}`
+  const url = `https://registry.npmjs.org/${name.replace(/\//g, '%2f')}`
   const headers = { accept: 'application/vnd.npm.install-v1+json' }
 
   return new Promise((resolve, reject) => {
