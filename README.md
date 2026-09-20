@@ -32,18 +32,18 @@ wholesale is worse than it looks, because you inherit this template's coverage f
 
 ## What you get
 
-|              |                                                                                              |
-| ------------ | -------------------------------------------------------------------------------------------- |
-| Build        | siroc, producing ESM and SSR bundles                                                         |
-| Unit tests   | Jest, with an enforced coverage floor                                                        |
-| Visual tests | Playwright against the example application, three viewports, committed baselines             |
-| Lint         | ESLint, Prettier, markdownlint, cspell, yamllint, knip                                       |
-| Secrets      | gitleaks, with a canary that proves the scanner still detects                                |
-| Commits      | Conventional Commits, checked by a hook and over the merge-request range                     |
-| CI           | GitLab and GitHub Actions, running the same set                                              |
-| Preview      | A manual job serving the example application through a Cloudflare tunnel and posting the URL |
-| Releases     | Changesets                                                                                   |
-| Environment  | A devcontainer for VS Code, Codespaces and DevPod                                            |
+|              |                                                                                                      |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| Build        | siroc, producing ESM and SSR bundles                                                                 |
+| Unit tests   | Jest, with an enforced coverage floor                                                                |
+| Visual tests | Playwright against the example application, three viewports, committed baselines                     |
+| Lint         | ESLint, Prettier, markdownlint, cspell, yamllint, knip                                               |
+| Secrets      | gitleaks, with a canary that proves the scanner still detects                                        |
+| Commits      | Conventional Commits, checked by a hook and over the merge-request range                             |
+| CI           | GitLab and GitHub Actions, running the same set                                                      |
+| Preview      | A manual job serving the example application through a Cloudflare tunnel and posting the URL         |
+| Releases     | Changesets, with `dev` snapshots and stable releases published from CI: [RELEASING.md](RELEASING.md) |
+| Environment  | A devcontainer for VS Code, Codespaces and DevPod                                                    |
 
 ## Commands
 

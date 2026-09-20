@@ -17,8 +17,7 @@
   "main": "dist/index.ssr.js",
   "module": "dist/index.esm.js",
   "files": [
-    "dist",
-    "templates"
+    "dist"
   ],
   "scripts": {
     "build": "siroc build",
@@ -48,6 +47,7 @@
     "lint:prose": "PROSE_LINT_GLOB='!{.changeset,example/drupal}/**' bash .gitlab/scripts/lint-prose.sh --all",
     "lint:prose:install": "bash .gitlab/scripts/install-vale.sh .vale/bin .vale/styles",
     "postinstall": "node scripts/postinstall.mjs",
+    "release:check": "node scripts/release-check.mjs",
     "serve": "node scripts/serve.js example/nuxt/dist 3000",
     "test": "jest",
     "test:e2e": "playwright test --grep-invert @visual",

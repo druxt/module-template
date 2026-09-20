@@ -1,0 +1,258 @@
+---
+name: Release
+
+# Publishes the package to npm. A module made from this template inherits both
+# channels and turns them on by completing the setup in RELEASING.md.
+#
+# dev: every push to main with a pending changeset publishes a snapshot under
+# the `dev` dist-tag. `latest` never moves, nothing is committed and no git tag
+# is made. Install one with `<package>@dev`.
+#
+# release: while changesets are pending, keeps a "version packages" pull
+# request open against main. Merging it is the release decision: the push that
+# follows finds a version npm does not have, publishes it to `latest`, tags it
+# and creates a GitHub Release.
+#
+# Building and publishing are separate jobs. The build job runs repository
+# code, install scripts included, so it holds no publishing rights: it ends by
+# packing a tarball. The publish job holds the OIDC permission and runs nothing
+# from the repository: it downloads that tarball and hands it to npm.
+#
+# Publishing authenticates through npm trusted publishing (OIDC), so there is
+# no token. It stays off until the repository variable NPM_PUBLISH is `true`.
+# Until then the packed tarball is the dry run.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/release.yml
+      - .changeset/config.json
+      - scripts/release-check.mjs
+      - package.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a publish half way through.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Runs on pull requests too, as a rehearsal. No id-token here: a lifecycle
+  # script in a pull request must not be able to reach npm.
+  snapshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      count: ${{ steps.pending.outputs.count }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: corepack enable && corepack prepare --activate
+
+      - run: npm ci
+
+      - name: Count pending changesets
+        id: pending
+        run: |
+          count=$(find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' | wc -l)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "Pending changesets: $count" >> "$GITHUB_STEP_SUMMARY"
+
+      # A snapshot cannot be cut in pre mode. The checkout is thrown away, so
+      # dropping the marker here changes nothing on the branch.
+      - name: Version the snapshot
+        if: steps.pending.outputs.count != '0'
+        run: |
+          rm -f .changeset/pre.json
+          npx changeset version --snapshot dev
+
+      - name: Build
+        if: steps.pending.outputs.count != '0'
+        run: npm run build
+
+      - name: Check the release
+        if: steps.pending.outputs.count != '0'
+        run: npm run release:check
+
+      - name: Pack the tarball
+        if: steps.pending.outputs.count != '0'
+        run: |
+          mkdir dev-package
+          npm pack --pack-destination dev-package
+          node -p "const p = require('./package.json'); p.name + '@' + p.version" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: steps.pending.outputs.count != '0'
+        with:
+          name: dev-package
+          path: dev-package
+          retention-days: 7
+          if-no-files-found: error
+
+  # No checkout and no install: nothing from the repository runs with the
+  # OIDC permission. Trusted publishing needs npm 11.5.1 or later, which needs
+  # a newer Node than the one the package builds on.
+  dev:
+    needs: snapshot
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/main' &&
+      vars.NPM_PUBLISH == 'true' &&
+      needs.snapshot.outputs.count != '0'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # An exact version, and no install scripts: this job can publish.
+      - name: Update npm
+        run: npm install --global --ignore-scripts npm@11.19.1
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          name: dev-package
+          path: dev-package
+
+      # The leading ./ matters: npm reads a bare "dir/file.tgz" as the GitHub
+      # shorthand "user/repo" and tries to clone it.
+      - name: Publish under the dev tag
+        run: |
+          npm publish ./dev-package/*.tgz --tag dev --access public
+          echo "Published under the dev tag." >> "$GITHUB_STEP_SUMMARY"
+
+  # Opens or updates the version pull request, and packs a version npm does
+  # not have yet. It runs repository code, so it holds no publishing rights.
+  version:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      tag: ${{ steps.unpublished.outputs.tag }}
+      version: ${{ steps.unpublished.outputs.version }}
+    steps:
+      # GitHub runs no checks on a pull request opened with the workflow's own
+      # token, and a protected main requires them. An app token gets them run.
+      # Without the app the pull request still opens, and its checks need a
+      # manual run.
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        id: app
+        if: vars.RELEASE_APP_ID != ''
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          fetch-depth: 0
+          # The install and the build run package code next. The pull request
+          # step below talks to the API with its own token, so git needs none.
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: corepack enable && corepack prepare --activate
+
+      - run: npm ci
+
+      # No publish script: this step only opens or updates the pull request.
+      # The title is the squash commit's subject, so it has to be conventional.
+      - uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51  # v2.1.2
+        id: changesets
+        with:
+          github-token: ${{ steps.app.outputs.token || github.token }}
+          pr-title: 'chore(release): version packages'
+          commit-message: 'chore(release): version packages'
+
+      - name: Find a version npm does not have
+        id: unpublished
+        if: steps.changesets.outputs.has-changesets == 'false'
+        run: |
+          tag=$(node scripts/release-check.mjs --unpublished)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        if: steps.unpublished.outputs.tag != ''
+        run: npm run build
+
+      - name: Check the release
+        if: steps.unpublished.outputs.tag != ''
+        run: npm run release:check
+
+      - name: Pack the tarball
+        if: steps.unpublished.outputs.tag != ''
+        run: |
+          mkdir release-package
+          npm pack --pack-destination release-package
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: steps.unpublished.outputs.tag != ''
+        with:
+          name: release-package
+          path: release-package
+          retention-days: 30
+          if-no-files-found: error
+
+  # No checkout and no install: nothing from the repository runs with the
+  # OIDC permission. A rerun skips whatever an earlier attempt published.
+  release:
+    needs: version
+    if: needs.version.outputs.tag != '' && vars.NPM_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # An exact version, and no install scripts: this job can publish.
+      - name: Update npm
+        run: npm install --global --ignore-scripts npm@11.19.1
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          name: release-package
+          path: release-package
+
+      - name: Publish, tag and create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.version.outputs.tag }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          if [ -n "$(npm view "$TAG" version 2>/dev/null)" ]; then
+            echo "$TAG is already on npm."
+          else
+            npm publish ./release-package/*.tgz --access public
+          fi
+          if ! gh release view "v$VERSION" > /dev/null 2>&1; then
+            gh release create "v$VERSION" --target "$GITHUB_SHA" --generate-notes
+          fi
+          echo "Published v$VERSION." >> "$GITHUB_STEP_SUMMARY"
