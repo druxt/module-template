@@ -13,9 +13,14 @@ name: Release
 # follows finds a version npm does not have, publishes it to `latest`, tags it
 # and creates a GitHub Release.
 #
+# Building and publishing are separate jobs. The build job runs repository
+# code, install scripts included, so it holds no publishing rights: it ends by
+# packing a tarball. The publish job holds the OIDC permission and runs nothing
+# from the repository: it downloads that tarball and hands it to npm.
+#
 # Publishing authenticates through npm trusted publishing (OIDC), so there is
-# no token. It stays a dry run until the repository variable NPM_PUBLISH is
-# `true`.
+# no token. It stays off until the repository variable NPM_PUBLISH is `true`.
+# Until then the packed tarball is the dry run.
 
 on:
   push:
@@ -38,13 +43,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  dev:
+  # Runs on pull requests too, as a rehearsal. No id-token here: a lifecycle
+  # script in a pull request must not be able to reach npm.
+  snapshot:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
-    env:
-      PUBLISH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.NPM_PUBLISH == 'true' }}
+    outputs:
+      count: ${{ steps.pending.outputs.count }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
@@ -82,39 +88,64 @@ jobs:
         if: steps.pending.outputs.count != '0'
         run: npm run release:check
 
-      # Trusted publishing needs npm 11.5.1 or later, which needs a newer Node
-      # than the one the package builds on.
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+      - name: Pack the tarball
         if: steps.pending.outputs.count != '0'
+        run: |
+          mkdir dev-package
+          npm pack --pack-destination dev-package
+          node -p "const p = require('./package.json'); p.name + '@' + p.version" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: steps.pending.outputs.count != '0'
+        with:
+          name: dev-package
+          path: dev-package
+          retention-days: 7
+          if-no-files-found: error
+
+  # No checkout and no install: nothing from the repository runs with the
+  # OIDC permission. Trusted publishing needs npm 11.5.1 or later, which needs
+  # a newer Node than the one the package builds on.
+  dev:
+    needs: snapshot
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/main' &&
+      vars.NPM_PUBLISH == 'true' &&
+      needs.snapshot.outputs.count != '0'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
       - name: Update npm
-        if: steps.pending.outputs.count != '0'
         run: npm install --global npm@^11.5.1
 
-      - name: Pack without publishing
-        if: steps.pending.outputs.count != '0' && env.PUBLISH != 'true'
-        run: |
-          npm pack --dry-run
-          echo "Dry run: nothing was published." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          name: dev-package
+          path: dev-package
 
       - name: Publish under the dev tag
-        if: steps.pending.outputs.count != '0' && env.PUBLISH == 'true'
-        run: node node_modules/@changesets/cli/bin.js publish --tag dev --no-git-tag
+        run: |
+          npm publish dev-package/*.tgz --tag dev --access public
+          echo "Published under the dev tag." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Report the version
-        if: steps.pending.outputs.count != '0'
-        run: node -p "const p = require('./package.json'); p.name + '@' + p.version" >> "$GITHUB_STEP_SUMMARY"
-
-  release:
+  # Opens or updates the version pull request, and packs a version npm does
+  # not have yet. It runs repository code, so it holds no publishing rights.
+  version:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-      id-token: write
+    outputs:
+      tag: ${{ steps.unpublished.outputs.tag }}
+      version: ${{ steps.unpublished.outputs.version }}
     steps:
       # GitHub runs no checks on a pull request opened with the workflow's own
       # token, and a protected main requires them. An app token gets them run.
@@ -153,7 +184,10 @@ jobs:
       - name: Find a version npm does not have
         id: unpublished
         if: steps.changesets.outputs.has-changesets == 'false'
-        run: echo "tag=$(node scripts/release-check.mjs --unpublished)" >> "$GITHUB_OUTPUT"
+        run: |
+          tag=$(node scripts/release-check.mjs --unpublished)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
       - name: Build
         if: steps.unpublished.outputs.tag != ''
@@ -163,32 +197,56 @@ jobs:
         if: steps.unpublished.outputs.tag != ''
         run: npm run release:check
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+      - name: Pack the tarball
         if: steps.unpublished.outputs.tag != ''
+        run: |
+          mkdir release-package
+          npm pack --pack-destination release-package
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: steps.unpublished.outputs.tag != ''
+        with:
+          name: release-package
+          path: release-package
+          retention-days: 30
+          if-no-files-found: error
+
+  # No checkout and no install: nothing from the repository runs with the
+  # OIDC permission. A rerun skips whatever an earlier attempt published.
+  release:
+    needs: version
+    if: needs.version.outputs.tag != '' && vars.NPM_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
       - name: Update npm
-        if: steps.unpublished.outputs.tag != ''
         run: npm install --global npm@^11.5.1
 
-      - name: Pack without publishing
-        if: steps.unpublished.outputs.tag != '' && vars.NPM_PUBLISH != 'true'
-        run: |
-          npm pack --dry-run
-          echo "Dry run: nothing was published." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          name: release-package
+          path: release-package
 
-      - name: Publish
-        if: steps.unpublished.outputs.tag != '' && vars.NPM_PUBLISH == 'true'
-        run: node node_modules/@changesets/cli/bin.js publish
-
-      - name: Tag and create the GitHub Release
-        if: steps.unpublished.outputs.tag != '' && vars.NPM_PUBLISH == 'true'
+      - name: Publish, tag and create the GitHub Release
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.version.outputs.tag }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
-          git push origin --tags
-          version=$(node -p "require('./package.json').version")
-          gh release create "v$version" --generate-notes --verify-tag
-          echo "Published v$version." >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$(npm view "$TAG" version 2>/dev/null)" ]; then
+            echo "$TAG is already on npm."
+          else
+            npm publish release-package/*.tgz --access public
+          fi
+          if ! gh release view "v$VERSION" > /dev/null 2>&1; then
+            gh release create "v$VERSION" --target "$GITHUB_SHA" --generate-notes
+          fi
+          echo "Published v$VERSION." >> "$GITHUB_STEP_SUMMARY"

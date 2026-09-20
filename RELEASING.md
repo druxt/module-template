@@ -32,6 +32,17 @@ To follow the channel on a site, let Renovate track the tag:
 3. Merge that pull request when the release is ready. This is the release decision.
 4. The push that follows publishes the new version to `latest`. It also pushes a `v<version>` tag, with a GitHub Release.
 
+## Build and publish jobs
+
+Each channel runs as a build job followed by a publish job.
+
+| Job     | Runs repository code          | Can publish to npm |
+| ------- | ----------------------------- | ------------------ |
+| Build   | Yes, install scripts included | No                 |
+| Publish | No, it checks out nothing     | Yes                |
+
+The build job ends by packing a tarball, and the publish job hands that tarball to npm. A pull request rehearses the build job only, so code in a pull request never runs with publishing rights.
+
 ## The pre-publish gate
 
 `npm run release:check` runs before every publish, on both channels. It refuses a release when:
@@ -42,7 +53,7 @@ To follow the channel on a site, let Renovate track the tag:
 
 ## One-time setup
 
-Publishing uses npm trusted publishing, so there is no npm token to store or rotate. Until the setup is complete the workflow packs the package with `npm pack --dry-run` and publishes nothing.
+Publishing uses npm trusted publishing, so there is no npm token to store or rotate. Until the setup is complete the workflow stops after packing: the tarball it would have published is attached to the run as an artifact, and nothing reaches npm.
 
 1. Publish the first version by hand, from a clean build: `npm publish --access public`. A package that does not exist on npm yet cannot name a trusted publisher.
 2. On the npm website, open the package, then **Settings**, then **Trusted publisher**. Choose GitHub Actions, and enter the organization, the repository and the workflow filename `release.yml`. Leave the environment empty.
