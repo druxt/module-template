@@ -56,6 +56,6 @@ The build job ends by packing a tarball, and the publish job hands that tarball 
 Publishing uses npm trusted publishing, so there is no npm token to store or rotate. Until the setup is complete the workflow stops after packing: the tarball it would have published is attached to the run as an artifact, and nothing reaches npm.
 
 1. Publish the first version by hand, from a clean build: `npm publish --access public`. A package that does not exist on npm yet cannot name a trusted publisher.
-2. On the npm website, open the package, then **Settings**, then **Trusted publisher**. Choose GitHub Actions, and enter the organization, the repository and the workflow filename `release.yml`. Leave the environment empty.
+2. On the npm website, open the package, then **Settings**, then **Trusted publisher**. Choose GitHub Actions, and enter the organization, the repository and the workflow filename `release.yml`. Leave the environment empty. Under **Allowed actions**, tick **Allow npm publish**: the workflow publishes directly, and a publisher limited to staged publishing refuses it.
 3. Create a GitHub App with read and write access to **Contents** and **Pull requests**, and install it on the repository. Store its ID as the repository variable `RELEASE_APP_ID` and its private key as the secret `RELEASE_APP_PRIVATE_KEY`. GitHub doesn't run checks on a pull request opened with the workflow's own token, so a protected `main` would never see them pass.
 4. Set the repository variable `NPM_PUBLISH` to `true`.

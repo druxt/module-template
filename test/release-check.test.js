@@ -121,6 +121,14 @@ describe('release-check', () => {
     expect(run().status).toBe(0)
   })
 
+  test.each([undefined, []])('refuses a files list of %p', (list) => {
+    write({ name: 'x', version: '1.0.0', files: list })
+    const result = run()
+    expect(result.status).toBe(1)
+    expect(result.out).toContain('has no "files" list')
+    expect(run('--skip-files').status).toBe(0)
+  })
+
   test('skips a private package', () => {
     write({ name: 'x', version: 'nope', private: true })
     expect(run()).toEqual({
