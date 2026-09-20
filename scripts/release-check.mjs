@@ -26,6 +26,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const FIELDS = ['dependencies', 'peerDependencies', 'optionalDependencies']
 const UNPUBLISHABLE =
   /^(workspace|link|file|portal|git|git\+ssh|git\+https|github|https?):/
+const REGISTRY_TIMEOUT = 15000
 const VERSION = /^(\d+)\.(\d+)\.(\d+)(-[0-9A-Za-z.-]+)?$/
 
 /**
@@ -115,8 +116,10 @@ export function fetchRecord(name) {
   const headers = { accept: 'application/vnd.npm.install-v1+json' }
 
   return new Promise((resolve, reject) => {
-    https
-      .get(url, { headers }, (response) => {
+    const request = https.get(
+      url,
+      { headers, timeout: REGISTRY_TIMEOUT },
+      (response) => {
         if (response.statusCode === 404) {
           response.resume()
           return resolve(null)
@@ -140,8 +143,16 @@ export function fetchRecord(name) {
             versions: Object.keys(data.versions),
           })
         })
-      })
-      .on('error', reject)
+      }
+    )
+
+    // Without this a stalled connection holds the job until its own timeout.
+    request.on('timeout', () =>
+      request.destroy(
+        new Error(`npm did not answer for ${name} within 15 seconds.`)
+      )
+    )
+    request.on('error', reject)
   })
 }
 
