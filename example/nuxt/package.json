@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "consola": "2.15.3",
-    "druxt": "^0.21.0",
+    "druxt": "^0.24.0",
     "druxt-module-template": "file:../..",
     "nuxt": "2.15.8"
   },
