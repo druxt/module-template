@@ -4,6 +4,7 @@ actionlint
 autobuild
 Autobuild
 automerge
+badgen
 behaviour
 bookworm
 cloudflared
