@@ -47,7 +47,7 @@
     "lint:private": "node scripts/lint-private-refs.mjs",
     "lint:prose": "PROSE_LINT_GLOB='!{.changeset,example/drupal}/**' bash .gitlab/scripts/lint-prose.sh --all",
     "lint:prose:install": "bash .gitlab/scripts/install-vale.sh .vale/bin .vale/styles",
-    "postinstall": "node scripts/postinstall.mjs",
+    "prepare": "node scripts/postinstall.mjs",
     "serve": "node scripts/serve.js example/nuxt/dist 3000",
     "test": "jest",
     "test:e2e": "playwright test --grep-invert @visual",
