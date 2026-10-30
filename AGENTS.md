@@ -1,7 +1,7 @@
 # Agent instructions
 
-Starting point for a Druxt module, and the reference module for the
-Druxt repository standard.
+Starting point for a Druxt module, and the reference for how every Druxt
+module is set up.
 
 ## Rules
 
@@ -38,7 +38,7 @@ Druxt repository standard.
 | `example/`         | Drupal 11 on SQLite and a Nuxt application that loads the module        |
 | `scripts/`         | Repository tooling, excluded from the package                           |
 | `.githooks/`       | Committed hooks, enabled by `npm install`                               |
-| `.gitlab/scripts/` | Content checks and merge-request automation, copied from the standard   |
+| `.gitlab/scripts/` | Content checks and merge-request automation, shared by Druxt modules    |
 
 ## Commands
 
