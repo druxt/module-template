@@ -1,7 +1,6 @@
 ---
 # CI for the Druxt module template, and the shape every Druxt module repository
-# is expected to have. See the repository standard for what each job is for and
-# why it exists.
+# is expected to have. Each job says what it is for and why it exists.
 #
 # GitHub Actions (.github/workflows/ci.yml) runs the same lint and test set,
 # because this repository is mirrored and releases are cut there. Keep the two

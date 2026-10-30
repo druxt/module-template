@@ -1,7 +1,7 @@
 {
   "name": "druxt-module-template",
   "version": "0.0.0",
-  "description": "Starting point for a Druxt module. Conforms to the Druxt repository standard.",
+  "description": "Starting point for a Druxt module.",
   "keywords": [
     "druxt",
     "module"
