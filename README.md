@@ -1,5 +1,12 @@
 # Druxt module template
 
+[![npm](https://img.shields.io/npm/v/druxt-module-template)](https://www.npmjs.com/package/druxt-module-template)
+[![npm@dev](https://img.shields.io/npm/v/druxt-module-template/dev)](https://www.npmjs.com/package/druxt-module-template/v/dev)
+[![CI](https://github.com/druxt/module-template/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/druxt/module-template/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/druxt/module-template/branch/main/graph/badge.svg)](https://codecov.io/gh/druxt/module-template)
+[![Known Vulnerabilities](https://snyk.io/test/github/druxt/module-template/badge.svg?targetFile=package.json)](https://snyk.io/test/github/druxt/module-template?targetFile=package.json)
+[![Discord](https://img.shields.io/discord/753866667590680587?label=discord&logo=discord&logoColor=white)](https://discord.druxtjs.org)
+
 Starting point for a [Druxt](https://druxtjs.org) module, and the reference
 module for the Druxt repository standard.
 
@@ -12,7 +19,8 @@ one.
 1. Create a repository from this template.
 2. `npm install`. That installs dependencies and enables the git hooks.
 3. Rename things: `package.json`'s `name`, the component in
-   `src/components/`, and the `@TODO` in it.
+   `src/components/`, the `@TODO` in it, and the repository and package names
+   in the badge row at the top of this file.
 4. `npm test` and `npm run lint` should both pass before you change anything.
 
 ## Bringing an existing module up
@@ -82,6 +90,12 @@ Apple silicon machine is a permanent false diff for everyone else.
 **Title your pull requests like commits.** This repository squash-merges, so the
 title becomes the commit subject. A prose title passes review and then breaks
 the next push to the target branch.
+
+**Keep the badge row, in its order.** It sits straight after the title: npm,
+npm dev, CI, codecov, Snyk, Discord. Keep both npm badges before the first
+release. shields.io draws a badge for a package that is not published yet, and
+badgen does not, so a badgen badge shows as a broken image. The URLs are
+absolute, so the row renders on npm too.
 
 **Nothing private in a tracked file.** This repository is public.
 `npm run lint:private` fails on a URL that only resolves on a private network,
