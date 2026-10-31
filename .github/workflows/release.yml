@@ -30,6 +30,9 @@ on:
     branches: ['*.x']
     paths:
       - '.changeset/*.md'
+      # Pre mode keeps the changeset files and records them here instead, so a
+      # version merge on a prerelease line moves only this file.
+      - '.changeset/pre.json'
       - '!.changeset/README.md'
   # No branch filter, so a stacked pull request that changes these paths runs
   # the rehearsal too.
