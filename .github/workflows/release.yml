@@ -13,7 +13,7 @@ name: Release
 # The push that follows finds a version that is not released yet, publishes
 # it, and creates a `<package>@<version>` tag and a GitHub Release.
 #
-# A release branch is `main` or a version branch such as `1.x`, matched by
+# A release branch is named for its major, such as `0.x` or `1.x`, matched by
 # pattern so a branch cut on demand is not invisible here.
 #
 # Building and publishing are separate jobs. A build job runs repository code,
@@ -27,7 +27,7 @@ name: Release
 
 on:
   push:
-    branches: [main, '*.x']
+    branches: ['*.x']
     paths:
       - '.changeset/*.md'
       - '!.changeset/README.md'
@@ -134,7 +134,7 @@ jobs:
     if: >-
       github.event_name != 'pull_request' &&
       startsWith(github.ref, 'refs/heads/') &&
-      (github.ref == 'refs/heads/main' || endsWith(github.ref, '.x')) &&
+      endsWith(github.ref, '.x') &&
       vars.NPM_PUBLISH == 'true' &&
       needs.snapshot.outputs.version != ''
     runs-on: ubuntu-latest

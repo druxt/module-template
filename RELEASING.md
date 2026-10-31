@@ -7,7 +7,7 @@ The package publishes to npm from `.github/workflows/release.yml`. Nobody runs `
 | Development | `dev`        | A push to a release branch that changes a changeset       | Trying unreleased work on a real site |
 | Stable      | `latest`     | When you merge the pull request that versions the package | Everyone else                         |
 
-A release branch is `main` or a version branch named for its major, such as `1.x`. The workflow matches them by pattern, so a branch cut on demand releases too. Set `baseBranch` in `.changeset/config.json` to the branch your releases come from.
+A release branch is named for its major, such as `0.x` or `1.x`. The workflow matches them by pattern, so a branch cut on demand releases too. Set `baseBranch` in `.changeset/config.json` to the branch your releases come from.
 
 ## Development releases
 
