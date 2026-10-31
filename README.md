@@ -26,7 +26,7 @@ one.
 ## Bringing an existing module up
 
 Do not copy this repository over yours. Take the rows of
-[What you get](#what-you-get) one at a time, each in its own merge request, so
+[What you get](#what-you-get) one at a time, each in its own pull request, so
 every change stays small enough to review.
 
 A wholesale copy also brings this template's coverage floor and cspell
@@ -73,28 +73,12 @@ SQLite, with PHP 8.3 or later and Composer on the host; the dev container has
 both. The end-to-end and visual tests run against the generated example. See
 `example/README.md`.
 
-## Things worth knowing before you change them
+## Contributing
 
-**The coverage floor goes up, never down.** It is measured from the current
-tests, not aspirational. If a change drops coverage, the change needs a test.
-
-**Never regenerate visual baselines locally.** Use the manual `visual:update`
-pipeline job. Chromium renders differently on ARM, so a baseline generated on an
-Apple silicon machine is a permanent false diff for everyone else.
-
-**Title your pull requests like commits.** This repository squash-merges, so the
-title becomes the commit subject. A prose title passes review and then breaks
-the next push to the target branch.
-
-**Keep the badge row, in its order.** It sits straight after the title: npm,
-npm dev, CI, codecov, Snyk, Discord. Keep both npm badges before the first
-release. shields.io draws a badge for a package that is not published yet, and
-badgen does not, so a badgen badge shows as a broken image. The URLs are
-absolute, so the row renders on npm too.
-
-**Nothing private in a tracked file.** This repository is public.
-`npm run lint:private` fails on a URL that only resolves on a private network,
-and runs in CI.
+[CONTRIBUTING.md](CONTRIBUTING.md) covers getting set up, what to run before
+you push, commit messages, the coverage floor and the visual baselines.
+[AGENTS.md](AGENTS.md) sets out the same rules for a coding agent working in
+this repository.
 
 ## Licence
 
