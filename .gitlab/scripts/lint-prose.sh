@@ -123,6 +123,20 @@ elif [ -n "${CI_MERGE_REQUEST_IID:-}" ]; then
   exit 2
 fi
 
+# CodeRabbit writes its summary into the description and rewrites it on every
+# review. Nobody here wrote it, and an edit to it is lost on the next review.
+# Only a closed block is dropped: after an opening marker with no closing one,
+# the rest of the description is still linted.
+if [ -f "$inputs/merge-request.md" ]; then
+  awk '
+    /^<!-- This is an auto-generated comment: .* by coderabbit\.ai -->$/ && !held { held = 1; block = $0; next }
+    held { block = block "\n" $0 }
+    held && /^<!-- end of auto-generated comment: .* by coderabbit\.ai -->$/ { held = 0; next }
+    !held { print }
+    END { if (held) print block }
+  ' "$inputs/merge-request.md" > "$inputs/merge-request.tmp" && mv "$inputs/merge-request.tmp" "$inputs/merge-request.md"
+fi
+
 generated=()
 for f in "$inputs"/commits/*.md "$inputs/merge-request.md"; do
   [ -f "$f" ] && generated+=("${f#"$inputs"/}")
