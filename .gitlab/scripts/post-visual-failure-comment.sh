@@ -25,7 +25,7 @@
 set -uo pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-# shellcheck source=scaffold/standards/gitlab-scripts/mr-note-lib.sh
+# shellcheck source=SCRIPTDIR/mr-note-lib.sh
 . "$script_dir/mr-note-lib.sh"
 
 results_dir="${VISUAL_RESULTS_DIR:-test-results}"

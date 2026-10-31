@@ -8,7 +8,7 @@
 [![Discord](https://img.shields.io/discord/753866667590680587?label=discord&logo=discord&logoColor=white)](https://discord.druxtjs.org)
 
 Starting point for a [Druxt](https://druxtjs.org) module, and the reference
-module for the Druxt repository standard.
+for how every Druxt module is set up.
 
 Start something new from it, or bring an existing module up
 to the same footing. They are different jobs and the second is the more common
@@ -25,18 +25,13 @@ one.
 
 ## Bringing an existing module up
 
-Do not copy this repository over yours. Run the conformance checker against
-your module and work the gap list it prints:
+Do not copy this repository over yours. Take the rows of
+[What you get](#what-you-get) one at a time, each in its own merge request, so
+every change stays small enough to review.
 
-```bash
-python3 check-standards.py --standard standards.yml \
-  --repos-root .. --repo <your-module>
-```
-
-It reports every requirement, whether your repository meets it, and why not
-when it does not. The gaps are independent, so they can be closed one merge
-request at a time rather than in one pass that is impossible to review. Copying
-wholesale is worse than it looks, because you inherit this template's coverage floor and its dictionary, and neither describes your module. The floor has to be measured from your own tests.
+A wholesale copy also brings this template's coverage floor and cspell
+dictionary, which describe this template rather than your module. Measure the
+floor from your own tests and build the dictionary from your own words.
 
 ## What you get
 

@@ -1,7 +1,7 @@
 # Contributing
 
-Thanks for helping. This template is the reference module for the Druxt
-repository standard, so a change here is a change to what every Druxt module
+Thanks for helping. This template is the reference for how every Druxt
+module is set up, so a change here is a change to what every Druxt module
 starts from.
 
 ## Getting set up
