@@ -4,11 +4,14 @@
  * publish.
  *
  *   node scripts/release-check.mjs [--offline] [--skip-files] [--unpublished]
+ *                                  [--dist-tag]
  *
  * --offline      skip the npm registry comparison.
  * --skip-files   skip the built-files check, for when no build has run.
  * --unpublished  print `name@version` when npm does not have this version
  *                yet, and check nothing.
+ * --dist-tag     print the npm dist-tag a stable publish of this version takes,
+ *                and check nothing.
  *
  * It checks three things. A dependency specifier such as `link:` or
  * `workspace:` resolves on the author's machine and nowhere else. A version
@@ -47,6 +50,41 @@ export function parseVersion(version) {
 // Compares two numeric cores: negative, zero or positive, as a sort would.
 const compareCores = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]
 
+// The highest published version with the given major, a stable release ranking
+// above a prerelease of the same core, or `null` when the major has none.
+const highestOfMajor = (versions, major) =>
+  versions
+    .map((version) => ({ version, ...parseVersion(version) }))
+    .filter(({ core }) => core && core[0] === major)
+    .reduce(
+      (top, next) =>
+        !top ||
+        compareCores(next.core, top.core) > 0 ||
+        (compareCores(next.core, top.core) === 0 && top.prerelease)
+          ? next
+          : top,
+      null
+    )
+
+/**
+ * Picks the npm dist-tag for a stable publish. npm moves `latest` to whatever
+ * it publishes without a tag, and refuses to when the version is a prerelease
+ * or lower than `latest`, so those take a tag of their own.
+ *
+ * @param {string} version - The version to publish.
+ * @param {object|null} record - `{ latest, versions }` from npm, or `null` when unpublished.
+ * @returns {string} `next` for a prerelease, `latest-<major>` below `latest`, else `latest`.
+ */
+export function distTag(version, record) {
+  const parsed = parseVersion(version)
+  if (parsed.prerelease) return 'next'
+  const latest = record && parseVersion(record.latest)
+  if (latest && compareCores(parsed.core, latest.core) < 0) {
+    return `latest-${parsed.core[0]}`
+  }
+  return 'latest'
+}
+
 /**
  * Checks a manifest against the rules.
  *
@@ -76,14 +114,11 @@ export function checkManifest({ manifest, dir, record, files = true }) {
   }
 
   if (record && !record.versions.includes(manifest.version)) {
-    const latest = parseVersion(record.latest)
-    const order = latest ? compareCores(parsed.core, latest.core) : 1
-    if (
-      order < 0 ||
-      (order === 0 && (parsed.prerelease || !latest.prerelease))
-    ) {
+    const top = highestOfMajor(record.versions, parsed.core[0])
+    const order = top ? compareCores(parsed.core, top.core) : 1
+    if (order < 0 || (order === 0 && (parsed.prerelease || !top.prerelease))) {
       problems.push(
-        `${manifest.version} does not rise above the published ${record.latest}.`
+        `${manifest.version} does not rise above the published ${top.version}.`
       )
     }
   }
@@ -162,7 +197,7 @@ export function fetchRecord(name) {
 }
 
 export async function main(argv = process.argv.slice(2)) {
-  const flags = ['--offline', '--skip-files', '--unpublished']
+  const flags = ['--offline', '--skip-files', '--unpublished', '--dist-tag']
   const options = argv.filter((arg) => arg.startsWith('--'))
   const unknown = options.filter(
     (arg) => !flags.includes(arg) && !arg.startsWith('--registry-file=')
@@ -194,6 +229,14 @@ export async function main(argv = process.argv.slice(2)) {
     if (!record || !record.versions.includes(manifest.version)) {
       console.log(`${manifest.name}@${manifest.version}`)
     }
+    return
+  }
+
+  if (options.includes('--dist-tag')) {
+    if (record === undefined) {
+      throw new Error('--dist-tag needs the registry, so not --offline.')
+    }
+    console.log(distTag(manifest.version, record))
     return
   }
 
