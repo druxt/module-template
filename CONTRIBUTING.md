@@ -68,3 +68,11 @@ reach a tracked file, whether as a URL, in a comment or in a patch description.
 `npm run lint:private` checks this and runs in the pipeline. When you need to
 cite something internal, describe it without the URL or point at a public
 equivalent.
+
+## Badges
+
+The badge row sits straight after the title in `README.md`, in this order: npm,
+npm dev, CI, codecov, Snyk, Discord. Keep both npm badges before the first
+release: shields.io draws a badge for a package npm does not have yet and
+badgen does not, so a badgen badge shows as a broken image until the first
+publish. The URLs are absolute, so the row renders on npm too.
