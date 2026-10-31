@@ -75,4 +75,4 @@ The badge row sits straight after the title in `README.md`, in this order: npm,
 npm dev, CI, codecov, Snyk, Discord. Keep both npm badges before the first
 release: shields.io draws a badge for a package npm does not have yet and
 badgen does not, so a badgen badge shows as a broken image until the first
-publish. The URLs are absolute, so the row renders on npm as well as here.
+publish. The URLs are absolute, so the row renders on npm too.
