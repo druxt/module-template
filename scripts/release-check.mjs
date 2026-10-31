@@ -50,19 +50,17 @@ export function parseVersion(version) {
 // Compares two numeric cores: negative, zero or positive, as a sort would.
 const compareCores = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]
 
-// The highest published version with the given major, a stable release ranking
-// above a prerelease of the same core, or `null` when the major has none.
-const highestOfMajor = (versions, major) =>
+// The highest published stable release with the given major, or `null` when the
+// major has none. Prereleases are left out on purpose. A dev snapshot has the
+// core of the release it is cut towards, so it shares that core with every
+// snapshot before it, and a prerelease bar would refuse all but the first.
+const highestStableOfMajor = (versions, major) =>
   versions
     .map((version) => ({ version, ...parseVersion(version) }))
-    .filter(({ core }) => core && core[0] === major)
+    .filter(({ core, prerelease }) => core && !prerelease && core[0] === major)
     .reduce(
       (top, next) =>
-        !top ||
-        compareCores(next.core, top.core) > 0 ||
-        (compareCores(next.core, top.core) === 0 && top.prerelease)
-          ? next
-          : top,
+        !top || compareCores(next.core, top.core) > 0 ? next : top,
       null
     )
 
@@ -114,9 +112,8 @@ export function checkManifest({ manifest, dir, record, files = true }) {
   }
 
   if (record && !record.versions.includes(manifest.version)) {
-    const top = highestOfMajor(record.versions, parsed.core[0])
-    const order = top ? compareCores(parsed.core, top.core) : 1
-    if (order < 0 || (order === 0 && (parsed.prerelease || !top.prerelease))) {
+    const top = highestStableOfMajor(record.versions, parsed.core[0])
+    if (top && compareCores(parsed.core, top.core) <= 0) {
       problems.push(
         `${manifest.version} does not rise above the published ${top.version}.`
       )

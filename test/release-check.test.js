@@ -102,6 +102,17 @@ describe('release-check', () => {
     expect(run('--skip-files').status).toBe(0)
   })
 
+  test('passes a dev snapshot cut after an earlier one of the same core', () => {
+    // `changeset version --snapshot` runs in CI and is never committed, so the
+    // pending changesets stay pending and every push computes the same core
+    // until the version pull request merges. Only the timestamp moves.
+    write(
+      { name: 'x', version: '0.2.0-dev.20261101000000' },
+      { latest: '0.1.0', versions: ['0.1.0', '0.2.0-dev.20261031000000'] }
+    )
+    expect(run('--skip-files').status).toBe(0)
+  })
+
   test('refuses a version below the highest of its own major', () => {
     write(
       { name: 'x', version: '1.8.5' },
