@@ -126,12 +126,15 @@ fi
 # CodeRabbit writes its summary into the description and rewrites it on every
 # review. Nobody here wrote it, and an edit to it is lost on the next review.
 # Only a closed block is dropped: after an opening marker with no closing one,
-# the rest of the description is still linted.
+# the rest of the description is still linted. The block's lines are blanked,
+# not removed, so Vale's line numbers match the description. A description
+# edited on GitHub can end its lines in CRLF, which the markers would miss.
 if [ -f "$inputs/merge-request.md" ]; then
   awk '
-    /^<!-- This is an auto-generated comment: .* by coderabbit\.ai -->$/ && !held { held = 1; block = $0; next }
-    held { block = block "\n" $0 }
-    held && /^<!-- end of auto-generated comment: .* by coderabbit\.ai -->$/ { held = 0; next }
+    { sub(/\r$/, "") }
+    /^<!-- This is an auto-generated comment: .* by coderabbit\.ai -->$/ && !held { held = 1; block = $0; lines = 1; next }
+    held { block = block "\n" $0; lines++ }
+    held && /^<!-- end of auto-generated comment: .* by coderabbit\.ai -->$/ { held = 0; for (i = 0; i < lines; i++) print ""; next }
     !held { print }
     END { if (held) print block }
   ' "$inputs/merge-request.md" > "$inputs/merge-request.tmp" && mv "$inputs/merge-request.tmp" "$inputs/merge-request.md"
