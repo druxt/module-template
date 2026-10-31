@@ -241,6 +241,7 @@ jobs:
       contents: read
     outputs:
       tag: ${{ steps.unreleased.outputs.tag }}
+      dist-tag: ${{ steps.dist-tag.outputs.dist-tag }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
@@ -272,6 +273,13 @@ jobs:
           else
             echo "$tag is already released."
           fi
+
+      # npm moves `latest` to whatever it publishes untagged, so a release from
+      # an older major's branch, or a prerelease, takes a tag of its own.
+      - name: Choose the npm dist-tag
+        id: dist-tag
+        if: steps.unreleased.outputs.tag != ''
+        run: echo "dist-tag=$(node scripts/release-check.mjs --dist-tag)" >> "$GITHUB_OUTPUT"
 
       - name: Build
         if: steps.unreleased.outputs.tag != ''
@@ -343,14 +351,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.pack.outputs.tag }}
+          DIST_TAG: ${{ needs.pack.outputs.dist-tag }}
         run: |
           if [ -n "$(npm view "$TAG" version 2>/dev/null)" ]; then
             state="already on npm"
           else
-            npm publish ./release-package/*.tgz --access public
+            npm publish ./release-package/*.tgz --access public --tag "$DIST_TAG"
             state="published"
           fi
           if ! gh release view "$TAG" > /dev/null 2>&1; then
-            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes-file release-package/notes.md
+            # Only a release npm calls latest is GitHub's latest too.
+            flags=(--latest=false)
+            [ "$DIST_TAG" = latest ] && flags=(--latest)
+            [ "$DIST_TAG" = next ] && flags+=(--prerelease)
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes-file release-package/notes.md "${flags[@]}"
           fi
-          echo "- $TAG ($state)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- $TAG ($state, \`$DIST_TAG\`)" >> "$GITHUB_STEP_SUMMARY"

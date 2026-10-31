@@ -94,6 +94,32 @@ describe('release-check', () => {
     expect(run('--skip-files').status).toBe(0)
   })
 
+  test('passes a version branch release below a newer major', () => {
+    const record = { latest: '2.0.0', versions: ['1.9.0', '2.0.0'] }
+    write({ name: 'x', version: '1.9.1' }, record)
+    expect(run('--skip-files').status).toBe(0)
+    write({ name: 'x', version: '1.9.1-dev.20261031020000' }, record)
+    expect(run('--skip-files').status).toBe(0)
+  })
+
+  test('refuses a version below the highest of its own major', () => {
+    write(
+      { name: 'x', version: '1.8.5' },
+      { latest: '2.0.0', versions: ['1.9.0', '2.0.0'] }
+    )
+    const result = run('--skip-files')
+    expect(result.status).toBe(1)
+    expect(result.out).toContain('does not rise above the published 1.9.0')
+  })
+
+  test('passes the first release of a new major', () => {
+    write(
+      { name: 'x', version: '3.0.0' },
+      { latest: '2.0.0', versions: ['1.9.0', '2.0.0'] }
+    )
+    expect(run('--skip-files').status).toBe(0)
+  })
+
   test('passes an already published version, because publish skips it', () => {
     write(
       { name: 'x', version: '1.2.0' },
@@ -149,6 +175,17 @@ describe('release-check', () => {
       { latest: '1.2.0', versions: ['1.2.0'] }
     )
     expect(run('--unpublished').out).toBe('')
+  })
+
+  test.each([
+    ['1.2.1', 'latest', { latest: '1.2.0', versions: ['1.2.0'] }],
+    ['2.0.0', 'latest', { latest: '2.0.0-beta.1', versions: ['2.0.0-beta.1'] }],
+    ['0.1.0', 'latest', null],
+    ['1.9.1', 'latest-1', { latest: '2.0.0', versions: ['1.9.0', '2.0.0'] }],
+    ['2.1.0-beta.0', 'next', { latest: '2.0.0', versions: ['2.0.0'] }],
+  ])('--dist-tag publishes %s as %s', (version, tag, record) => {
+    write({ name: 'x', version }, record)
+    expect(run('--dist-tag').out).toBe(`${tag}\n`)
   })
 
   test('refuses an unknown option', () => {

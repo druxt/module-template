@@ -34,6 +34,8 @@ To follow the channel on a site, let Renovate track the tag:
 3. Merge that pull request when the release is ready. This is the release decision.
 4. The push that follows waits for a reviewer to approve the `release` environment, then publishes the new version to `latest`. It also creates a `<package>@<version>` tag, with a GitHub Release whose notes are that version's CHANGELOG entry.
 
+A release from an older major's branch publishes under its own tag: `1.9.1`, cut on `1.x` after `2.0.0`, goes to `latest-1`. GitHub does not mark its Release as the latest one. A prerelease publishes under `next`.
+
 A version counts as released once npm has it and its GitHub Release exists. If a run fails between the two, rerun it: it skips the publish and creates the missing Release.
 
 ## Build and publish jobs
@@ -51,7 +53,7 @@ The build jobs end by packing a tarball, and the publish jobs hand that tarball 
 `npm run release:check` runs before every publish, on both channels. It refuses a release when:
 
 - a dependency uses a specifier that only resolves on the author's machine, such as `link:` or `workspace:`
-- the version is at or below the one npm already has
+- the version is at or below the highest one npm already has for its major
 - an entry in `files` was not built
 
 ## One-time setup
