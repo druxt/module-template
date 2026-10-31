@@ -17,6 +17,13 @@ nothing.
 The toolchain is pinned in `.mise.toml`. With [mise](https://mise.jdx.dev)
 installed, `mise install` gives you the same Node the pipeline uses.
 
+## Branches
+
+Each major version has a release branch named `<major>.x`, and `0.x` is the
+current one. Branch from it and open your pull request against it. A fix for an
+older minor branches from a `<major>.<minor>.x` branch, cut from the release tag
+when one is needed.
+
 ## Before you push
 
 ```bash

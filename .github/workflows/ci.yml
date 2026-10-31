@@ -7,9 +7,14 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # A release line is <major>.x, or <major>.<minor>.x when an old minor needs
+    # a patch, and '*.x' matches both: * matches dots. A pattern, so a branch
+    # cut on demand is not invisible to CI.
+    branches: ['*.x']
+  # No branch filter on purpose. The filter matches the pull request's base, so
+  # a pull request stacked on an unlisted branch would run no jobs, and show no
+  # checks rather than failing ones.
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read

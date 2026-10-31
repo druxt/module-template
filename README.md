@@ -2,8 +2,8 @@
 
 [![npm](https://img.shields.io/npm/v/druxt-module-template)](https://www.npmjs.com/package/druxt-module-template)
 [![npm@dev](https://img.shields.io/npm/v/druxt-module-template/dev)](https://www.npmjs.com/package/druxt-module-template/v/dev)
-[![CI](https://github.com/druxt/module-template/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/druxt/module-template/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/druxt/module-template/branch/main/graph/badge.svg)](https://codecov.io/gh/druxt/module-template)
+[![CI](https://github.com/druxt/module-template/actions/workflows/ci.yml/badge.svg?branch=0.x)](https://github.com/druxt/module-template/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/druxt/module-template/branch/0.x/graph/badge.svg)](https://codecov.io/gh/druxt/module-template)
 [![Known Vulnerabilities](https://snyk.io/test/github/druxt/module-template/badge.svg?targetFile=package.json)](https://snyk.io/test/github/druxt/module-template?targetFile=package.json)
 [![Discord](https://img.shields.io/discord/753866667590680587?label=discord&logo=discord&logoColor=white)](https://discord.druxtjs.org)
 
