@@ -29,6 +29,13 @@ module is set up.
   job. Chromium renders differently on ARM and a locally generated baseline is
   a permanent false diff for everyone else.
 
+## Druxt docs
+
+Read the Druxt docs rather than relying on memory. The MCP server at
+`https://druxtjs.org/mcp` is configured here for Claude Code, VS Code, Cursor
+and OpenCode. Where a tool has no MCP support, use
+`https://druxtjs.org/llms.txt`.
+
 ## Layout
 
 | Path               | Purpose                                                                 |
