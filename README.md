@@ -82,4 +82,5 @@ this repository.
 
 ## Licence
 
-[MIT](LICENSE)
+[MIT](LICENSE), except `example/drupal/`, the example Drupal module, which is
+[GPL-2.0-or-later](example/drupal/LICENSE.txt) like Drupal itself.

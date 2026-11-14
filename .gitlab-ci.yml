@@ -58,9 +58,14 @@ default:
 .php-node:
   image: php:8.4
   interruptible: true
+  variables:
+    # The site build is assembled from scratch on every run, so the cache that
+    # pays is Composer's download cache, beside Eddy's tooling.
+    COMPOSER_CACHE_DIR: $CI_PROJECT_DIR/.composer-cache
   cache:
-    key: php-8.4-composer
+    key: php-8.4-eddy
     paths:
+      - .composer-cache/
       - example/drupal/vendor/
       - .npm/
   before_script:
@@ -68,7 +73,8 @@ default:
     - section_start "toolchain" "Installing PHP extensions, Composer and Node"
     # python3-setuptools: this image's Python has no distutils, and the node-gyp
     # bundled with Node 16's npm still imports it when vue-jest's deasync builds.
-    - apt-get update -yqq && apt-get install -yqq git unzip sqlite3 libsqlite3-dev libzip-dev libicu-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev libxml2-dev python3 python3-setuptools build-essential > /dev/null
+    # lsof and procps: Eddy's start and stop find the server on the port with them.
+    - apt-get update -yqq && apt-get install -yqq git unzip lsof procps sqlite3 libsqlite3-dev libzip-dev libicu-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev libxml2-dev python3 python3-setuptools build-essential > /dev/null
     - docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
     - docker-php-ext-install -j"$(nproc)" pdo_sqlite intl gd zip opcache > /dev/null
     - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=2.8.6 > /dev/null
@@ -237,7 +243,8 @@ test:unit:
 # --- Example ---
 #
 # The module is built, the example installs it by path, the backend is
-# provisioned from scratch on SQLite, and the example is generated against it.
+# assembled by Eddy's tooling and provisioned from scratch on SQLite, and the
+# example is generated against it.
 # The generated example is what the end-to-end, visual and preview jobs read.
 #
 
@@ -255,7 +262,7 @@ example:generate:
     - npm run build
     - section_end "module"
     - section_start "backend" "Provisioning and starting the example backend"
-    - npm run example:assemble && npm run example:provision && npm run example:start
+    - npm run example:assemble && npm run example:start && npm run example:provision
     - . ./example/.env && curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'
     - section_end "backend"
     - section_start "generate" "Generating the example"
