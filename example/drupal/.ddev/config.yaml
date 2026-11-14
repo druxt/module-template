@@ -1,6 +1,8 @@
 name: druxt-module-template
 type: drupal
-docroot: web
+# Eddy's tooling builds the site in build/, around this module.
+docroot: build/web
+composer_root: build
 php_version: "8.4"
 webserver_type: nginx-fpm
 xdebug_enabled: false

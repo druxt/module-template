@@ -1,0 +1,17 @@
+name: 'Druxt module template example'
+description: 'Sets up the backend the module template example reads: the Druxt module with anonymous access to its resources, the Article and Page content types, and one published page.'
+type: 'Site'
+recipes:
+  # The standard profile no longer creates content types; they are recipes.
+  - core/recipes/article_content_type
+  - core/recipes/page_content_type
+install:
+  - druxt
+config:
+  actions:
+    # The example reads Druxt's resources as an anonymous visitor.
+    user.role.anonymous:
+      grantPermissions:
+        - 'access druxt resources'
+# A page to read is default content, in content/. Replace it with whatever
+# your module's components render.

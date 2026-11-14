@@ -1,0 +1,7 @@
+name: 'Druxt module template example'
+type: module
+description: 'The Drupal side of the module template example. Its recipe sets up what the example application reads.'
+package: Druxt
+core_version_requirement: ^11
+dependencies:
+  - druxt:druxt

@@ -57,6 +57,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   pinned to commit SHAs.
 - ESLint sets `root: true`, so a checkout inside another workspace no longer
   inherits that workspace's rules.
+- The example backend is a small Drupal module built into a site by Eddy's
+  tooling (`drevops/eddy-tooling`), in place of the hand-maintained
+  `.devtools/` scripts and the committed site. A recipe in
+  `example/drupal/recipes/` sets up the content and access the example reads.
+  The site is no longer locked: each
+  assemble builds the newest Drupal 11 release, so it stays above the latest
+  core security advisories, and the web root is `example/drupal/build/web`.
 
 ### Removed
 
@@ -67,6 +74,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The example backend's `settings.php` set its database after the
+  `settings.local.php` include, so a provision's database setting was ignored.
+  The settings file is now written by the installer into the site build.
 - `vue-template-compiler` was pinned a patch behind `vue`, which made the test
   suite refuse to run with a version-mismatch error. Both are now on 2.7.16.
 
