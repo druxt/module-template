@@ -7,6 +7,10 @@
     "module"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/druxt/module-template.git"
+  },
   "exports": {
     ".": {
       "require": "./dist/index.ssr.js",

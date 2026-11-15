@@ -18,9 +18,10 @@ one.
 
 1. Create a repository from this template.
 2. `npm install`. That installs dependencies and enables the git hooks.
-3. Rename things: `package.json`'s `name`, the component in
+3. Rename things: `package.json`'s `name` and `repository`, the component in
    `src/components/`, the `@TODO` in it, and the repository and package names
-   in the badge row at the top of this file.
+   in the badge row at the top of this file. The changelog links each entry's
+   commit through `repository`.
 4. `npm test` and `npm run lint` should both pass before you change anything.
 
 ## Bringing an existing module up
