@@ -58,11 +58,43 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Whether this run follows a changeset. A push that changes only the
+  # changelog generator or its settings rebuilds the version pull request and
+  # nothing else: it publishes no snapshot and starts no release.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changeset: ${{ steps.diff.outputs.changeset }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          changeset=true
+          # Only a push can be generator-only. Without its parent commit, as on
+          # a new branch, the run counts as a changeset one.
+          if [ "$EVENT" = push ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            git diff --name-only "$BEFORE" "$AFTER" \
+              | grep -v '^\.changeset/README\.md$' \
+              | grep -Eq '^\.changeset/([^/]+\.md|pre\.json)$' || changeset=false
+          fi
+          echo "changeset=$changeset" >> "$GITHUB_OUTPUT"
+
   # Runs on pull requests too, as a rehearsal. No id-token here: a lifecycle
   # script in a pull request must not be able to reach npm. A fork's own
   # pushes have no business releasing, so they skip.
   snapshot:
-    if: ${{ !github.event.repository.fork }}
+    needs: changes
+    if: ${{ !github.event.repository.fork && needs.changes.outputs.changeset == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -241,8 +273,8 @@ jobs:
   # exists, so a rerun after a failed Release creation still finishes the job.
   # It runs repository code, so it holds no write or publishing rights.
   pack:
-    needs: version
-    if: needs.version.outputs.pending == 'false'
+    needs: [changes, version]
+    if: needs.version.outputs.pending == 'false' && needs.changes.outputs.changeset == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
