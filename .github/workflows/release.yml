@@ -59,9 +59,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Whether this run follows a changeset. A push that changes only the
-  # changelog generator or its settings rebuilds the version pull request and
-  # nothing else: it publishes no snapshot and starts no release.
+  # Whether this run follows a changeset, which decides whether it cuts a dev
+  # snapshot. A push that changes only the changelog generator or its settings
+  # cuts none. Every push still reaches `pack`, so a release that an earlier
+  # run left unfinished, or whose queued run a later push replaced, still goes
+  # out.
   changes:
     runs-on: ubuntu-latest
     permissions:
@@ -85,9 +87,8 @@ jobs:
           if [ "$EVENT" = push ]; then
             changeset=false
             # A push that creates a branch, or whose previous commit is gone,
-            # has nothing to compare against, so it publishes nothing. The
-            # answer depends on the event alone, so a rerun gets the same one.
-            # A manual run still cuts the dev snapshot.
+            # has nothing to compare against, so it cuts no snapshot. A manual
+            # run cuts it instead.
             # NUL-separated, so git does not quote a name with non-ASCII bytes.
             if git cat-file -e "$BEFORE^{commit}" 2>/dev/null \
               && git diff --name-only -z "$BEFORE" "$AFTER" \
@@ -283,8 +284,8 @@ jobs:
   # exists, so a rerun after a failed Release creation still finishes the job.
   # It runs repository code, so it holds no write or publishing rights.
   pack:
-    needs: [changes, version]
-    if: needs.version.outputs.pending == 'false' && needs.changes.outputs.changeset == 'true'
+    needs: version
+    if: needs.version.outputs.pending == 'false'
     runs-on: ubuntu-latest
     permissions:
       contents: read
