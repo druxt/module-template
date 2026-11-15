@@ -79,21 +79,18 @@ jobs:
           EVENT: ${{ github.event_name }}
           BEFORE: ${{ github.event.before }}
           AFTER: ${{ github.sha }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           changeset=true
           # Only a push can be generator-only.
           if [ "$EVENT" = push ]; then
-            base=$BEFORE
-            # A push that creates a branch has no previous commit, so its
-            # commits are the ones not on the default branch. With no base at
-            # all, the push publishes nothing.
-            if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
-              base=$(git merge-base "origin/$DEFAULT_BRANCH" "$AFTER" 2>/dev/null) || base=
-            fi
             changeset=false
+            # A push that creates a branch, or whose previous commit is gone,
+            # has nothing to compare against, so it publishes nothing. The
+            # answer depends on the event alone, so a rerun gets the same one.
+            # A manual run still cuts the dev snapshot.
             # NUL-separated, so git does not quote a name with non-ASCII bytes.
-            if [ -n "$base" ] && git diff --name-only -z "$base" "$AFTER" \
+            if git cat-file -e "$BEFORE^{commit}" 2>/dev/null \
+              && git diff --name-only -z "$BEFORE" "$AFTER" \
               | tr '\0' '\n' \
               | grep -v '^\.changeset/README\.md$' \
               | grep -Eq '^\.changeset/([^/]+\.md|pre\.json)$'; then
