@@ -43,6 +43,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/release.yml
+      - .changeset/changelog.cjs
       - .changeset/config.json
       - scripts/release-check.mjs
       - package.json
