@@ -80,6 +80,7 @@
     "jest-environment-jsdom": "27.5.1",
     "jest-junit": "14.0.1",
     "knip": "2.43.0",
+    "markdown-it": "14.3.3",
     "markdownlint-cli2": "0.10.0",
     "prettier": "3.3.3",
     "regenerator-runtime": "0.14.1",
