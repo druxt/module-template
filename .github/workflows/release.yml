@@ -33,6 +33,10 @@ on:
       # Pre mode keeps the changeset files and records them here instead, so a
       # version merge on a prerelease line moves only this file.
       - '.changeset/pre.json'
+      # The changelog generator and its settings write the version pull
+      # request, so a change to either rebuilds it.
+      - '.changeset/changelog.cjs'
+      - '.changeset/config.json'
       - '!.changeset/README.md'
   # No branch filter, so a stacked pull request that changes these paths runs
   # the rehearsal too.
