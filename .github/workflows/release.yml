@@ -33,12 +33,17 @@ on:
       # Pre mode keeps the changeset files and records them here instead, so a
       # version merge on a prerelease line moves only this file.
       - '.changeset/pre.json'
+      # The changelog generator and its settings write the version pull
+      # request, so a change to either rebuilds it.
+      - '.changeset/changelog.cjs'
+      - '.changeset/config.json'
       - '!.changeset/README.md'
   # No branch filter, so a stacked pull request that changes these paths runs
   # the rehearsal too.
   pull_request:
     paths:
       - .github/workflows/release.yml
+      - .changeset/changelog.cjs
       - .changeset/config.json
       - scripts/release-check.mjs
       - package.json
@@ -54,11 +59,53 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Whether this run follows a changeset, which decides whether it cuts a dev
+  # snapshot. A push that changes only the changelog generator or its settings
+  # cuts none. Every push still reaches `pack`, so a release that an earlier
+  # run left unfinished, or whose queued run a later push replaced, still goes
+  # out.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changeset: ${{ steps.diff.outputs.changeset }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          changeset=true
+          # Only a push can be generator-only.
+          if [ "$EVENT" = push ]; then
+            changeset=false
+            # A push that creates a branch, or whose previous commit is gone,
+            # has nothing to compare against, so it cuts no snapshot. A manual
+            # run cuts it instead.
+            # NUL-separated, so git does not quote a name with non-ASCII bytes.
+            if git cat-file -e "$BEFORE^{commit}" 2>/dev/null \
+              && git diff --name-only -z "$BEFORE" "$AFTER" \
+              | tr '\0' '\n' \
+              | grep -v '^\.changeset/README\.md$' \
+              | grep -Eq '^\.changeset/([^/]+\.md|pre\.json)$'; then
+              changeset=true
+            fi
+          fi
+          echo "changeset=$changeset" >> "$GITHUB_OUTPUT"
+
   # Runs on pull requests too, as a rehearsal. No id-token here: a lifecycle
   # script in a pull request must not be able to reach npm. A fork's own
   # pushes have no business releasing, so they skip.
   snapshot:
-    if: ${{ !github.event.repository.fork }}
+    needs: changes
+    if: ${{ !github.event.repository.fork && needs.changes.outputs.changeset == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
