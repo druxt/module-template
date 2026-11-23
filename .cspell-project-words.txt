@@ -54,6 +54,7 @@ nvmrc
 opcache
 opencode
 pdo
+procps
 pyyaml
 shivammathur
 siroc

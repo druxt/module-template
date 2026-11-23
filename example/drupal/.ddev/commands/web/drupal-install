@@ -4,12 +4,15 @@
 ## Usage: drupal-install
 ## Example: "ddev drupal-install"
 #
-# The same site .devtools/provision builds without Docker, on DDEV's MySQL.
+# The site `npm run example:setup` builds on SQLite, on DDEV's MySQL instead:
+# Eddy assembles the codebase, then the site is installed with this module
+# enabled and the example's recipe applied. Assembling replaces build/, and
+# with it the settings DDEV wrote there on start, so the installer is given
+# DDEV's database directly.
 set -euo pipefail
-composer install
-drush -y site:install --site-name='druxt-module-template' standard
-drush -y recipe:apply /var/www/html/web/core/recipes/article_content_type
-drush -y recipe:apply /var/www/html/web/core/recipes/page_content_type
+scripts/eddy-tooling >&2
+vendor/bin/eddy-assemble
+drush -y site:install --site-name='druxt-module-template' --db-url=mysql://db:db@db/db standard
+drush -y pm:enable druxt_module_template_example
+drush -y recipe:apply "$PWD/recipes/druxt_module_template_example"
 drush -y cache:rebuild
-drush -y pm:enable druxt
-drush role:perm:add anonymous 'access druxt resources'

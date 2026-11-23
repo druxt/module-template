@@ -1,0 +1,12 @@
+{
+    "require-dev": {
+        "drevops/eddy-tooling": "~1.0.6",
+        "drush/drush": "^13 || ^14"
+    },
+    "extra": {
+        "eddy": {
+            "drupal-version": "11",
+            "version": "5.1.1"
+        }
+    }
+}

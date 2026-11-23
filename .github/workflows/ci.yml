@@ -153,7 +153,7 @@ jobs:
         env:
           WEBSERVER_HOST: 127.0.0.1
           WEBSERVER_PORT: 8888
-        run: npm run example:assemble && npm run example:provision && npm run example:start
+        run: npm run example:assemble && npm run example:start && npm run example:provision
 
       - name: Backend answers JSON:API
         run: . ./example/.env && curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'

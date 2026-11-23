@@ -52,6 +52,9 @@ typings/
 # Optional npm cache directory
 .npm
 
+# Composer's download cache in the pipeline
+.composer-cache/
+
 # Optional eslint cache
 .eslintcache
 
@@ -117,5 +120,5 @@ playwright-report/
 # Vale binary and styles, installed by .gitlab/scripts/install-vale.sh
 .vale/
 
-# Written by example/drupal/.devtools/start with the backend URL
+# Written by example/drupal/scripts/start-example.sh with the backend URL
 example/.env

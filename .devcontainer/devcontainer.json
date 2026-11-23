@@ -1,7 +1,7 @@
 {
   "name": "Druxt module",
   // PHP for the example's Drupal backend, provisioned without Docker by
-  // example/drupal/.devtools. The PHP feature builds against trixie's
+  // Eddy's tooling in example/drupal. The PHP feature builds against trixie's
   // libsqlite3, which meets Drupal 11's 3.45 minimum; the PHP image is on
   // bookworm's 3.40 and cannot install it. Node 16 for the module comes from
   // its feature: Nuxt 2 builds on webpack 4, which does not run on a newer Node.
@@ -65,7 +65,7 @@
       "onAutoForward": "notify"
     },
     "8888": {
-      "label": "Example backend (example/drupal/.devtools)",
+      "label": "Example backend (example/drupal)",
       "onAutoForward": "silent"
     }
   },
