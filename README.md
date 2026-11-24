@@ -19,9 +19,10 @@ one.
 1. Create a repository from this template.
 2. `npm install`. That installs dependencies and enables the git hooks.
 3. Rename things: `package.json`'s `name` and `repository`, the component in
-   `src/components/`, the `@TODO` in it, and the repository and package names
-   in the badge row at the top of this file. The changelog links each entry's
-   commit through `repository`.
+   `src/components/`, the `@TODO` in it, the `@TODO`s in
+   `docs-site/nuxt.config.js`, and the repository and package names in the
+   badge row at the top of this file. The changelog links each entry's commit
+   through `repository`.
 4. `npm test` and `npm run lint` should both pass before you change anything.
 
 ## Bringing an existing module up
@@ -48,6 +49,7 @@ floor from your own tests and build the dictionary from your own words.
 | Preview      | A manual job serving the example application through a Cloudflare tunnel and posting the URL         |
 | Releases     | Changesets, with `dev` snapshots and stable releases published from CI: [RELEASING.md](RELEASING.md) |
 | Environment  | A devcontainer for VS Code, Codespaces and DevPod                                                    |
+| Docs         | A documentation site built from the README and `docs/`, published to GitHub Pages                    |
 
 ## Commands
 
@@ -73,6 +75,27 @@ module. `npm run example:setup` provisions the backend without Docker, on
 SQLite, with PHP 8.3 or later and Composer on the host; the dev container has
 both. The end-to-end and visual tests run against the generated example. See
 `example/README.md`.
+
+## The documentation site
+
+`docs/` holds the pages and `docs-site/` builds them into a site, which the
+`Docs` workflow publishes to GitHub Pages on a push to `0.x`. The README is
+the landing page, so nothing is written twice, and every page is read on
+GitHub as well as on the site.
+
+```bash
+cd docs-site && npm install
+npm run dev       # the site on http://localhost:3000
+npm run generate  # what the workflow builds
+```
+
+The look comes from [`@druxt/dui`](https://www.npmjs.com/package/@druxt/dui),
+so a module's own configuration is the five `@TODO`s in
+`docs-site/nuxt.config.js` and the reading order in `docs-site/nav.js`.
+
+Before the first deploy, turn Pages on for the repository with GitHub Actions
+as the source. Until then the build runs on every pull request and the deploy
+step has nowhere to publish.
 
 ## Contributing
 
