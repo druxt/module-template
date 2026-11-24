@@ -82,7 +82,14 @@ fetch() {
 
 # --- Vale --------------------------------------------------------------------
 
-if [ -x "$bin_dir/vale" ] && "$bin_dir/vale" --version 2>/dev/null | grep -q "$vale_version"; then
+# `vale --version` prints `vale version X.Y.Z`, and the comparison is exact:
+# an unanchored match for 3.17.1 is also satisfied by 3.17.10, which would
+# leave the wrong binary in place and skip the install.
+installed_vale() {
+  "$1" --version 2>/dev/null | awk '{ print $NF; exit }'
+}
+
+if [ -x "$bin_dir/vale" ] && [ "$(installed_vale "$bin_dir/vale")" = "$vale_version" ]; then
   echo "vale ${vale_version} already installed in ${bin_dir}"
 else
   archive="$work/vale.tar.gz"
