@@ -56,6 +56,18 @@ const URL_HOST =
   /(?:[a-z][a-z0-9+.-]*:\/\/(?:[^/@\s]*@)?|\bgit@)(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9._-]+)/g
 
 /**
+ * An SCP-style git remote, `user@host:path`.
+ *
+ * `git` is the usual account and not the only valid one, so
+ * `deploy@10.0.0.8:team/repo.git` is a private host in a form the pattern
+ * above never sees. The colon and something after it are required, and that
+ * is what separates a remote from a version such as `eslint@10.0.0`, whose
+ * host would otherwise read as an RFC1918 address.
+ */
+const SCP_HOST =
+  /\b[A-Za-z0-9._-]+@(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9._-]+):(?=[^\s:])/g
+
+/**
  * The IPv4 address inside an IPv4-mapped IPv6 literal, else the host as given.
  *
  * A mapped address has four spellings, compressed or expanded, with the last
@@ -98,15 +110,24 @@ export function mappedToIpv4(host) {
 export function findPrivateRefs(text) {
   const found = []
   text.split('\n').forEach((line, index) => {
-    for (const match of line.matchAll(URL_HOST)) {
-      const host = mappedToIpv4(
-        match[1].replace(/^\[|\]$/g, '').replace(/[.:]+$/, '')
-      )
-      if (ALLOWED.some((pattern) => pattern.test(host))) {
-        continue
-      }
-      if (PRIVATE_HOST.some((pattern) => pattern.test(host))) {
-        found.push({ line: index + 1, host })
+    // A host written as `https://user@host:8080/` matches both patterns, so
+    // the same host on the same line is reported once.
+    const seen = new Set()
+    for (const pattern of [URL_HOST, SCP_HOST]) {
+      for (const match of line.matchAll(pattern)) {
+        const host = mappedToIpv4(
+          match[1].replace(/^\[|\]$/g, '').replace(/[.:]+$/, '')
+        )
+        if (seen.has(host)) {
+          continue
+        }
+        if (ALLOWED.some((candidate) => candidate.test(host))) {
+          continue
+        }
+        if (PRIVATE_HOST.some((candidate) => candidate.test(host))) {
+          seen.add(host)
+          found.push({ line: index + 1, host })
+        }
       }
     }
   })
@@ -143,6 +164,12 @@ export function lintPrivateRefs(root = ROOT) {
     const absolute = path.join(root, file)
     let text
     try {
+      // Git tracks symbolic links, and reading one follows it. A link to a
+      // character device such as /dev/zero never reaches end of file, so the
+      // read below would exhaust memory before the NUL check could reject it.
+      if (!fs.lstatSync(absolute).isFile()) {
+        continue
+      }
       text = fs.readFileSync(absolute, 'utf8')
     } catch {
       continue

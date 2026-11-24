@@ -111,12 +111,34 @@ for sha in $shas; do
 done
 
 description_state="no description"
+
+# GitLab cuts CI_MERGE_REQUEST_DESCRIPTION at 2700 characters, so a finding
+# past that point is in text this job never sees and the job reports [PASS].
+# The API serves the whole description, as check-attribution.sh reads it, and
+# a truncated value is linted with a warning rather than refused: failing a
+# pipeline over a long description would be worse than linting its first half.
+api_description=""
+if [ -n "${GITLAB_API_TOKEN:-}" ] && [ -n "${CI_API_V4_URL:-}" ] \
+  && [ -n "${CI_PROJECT_ID:-}" ] && [ -n "${CI_MERGE_REQUEST_IID:-}" ]; then
+  url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}"
+  payload="$(curl -sSf --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" "$url" 2>/dev/null || true)"
+  if [ -n "$payload" ] && command -v python3 >/dev/null 2>&1; then
+    api_description="$(printf '%s' "$payload" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("description") or "")')" || api_description=""
+  fi
+fi
+
 if [ -n "${MERGE_REQUEST_DESCRIPTION+x}" ]; then
   printf '%s\n' "$MERGE_REQUEST_DESCRIPTION" > "$inputs/merge-request.md"
+  description_state="the merge request description"
+elif [ -n "$api_description" ]; then
+  printf '%s\n' "$api_description" > "$inputs/merge-request.md"
   description_state="the merge request description"
 elif [ -n "${CI_MERGE_REQUEST_DESCRIPTION+x}" ]; then
   printf '%s\n' "$CI_MERGE_REQUEST_DESCRIPTION" > "$inputs/merge-request.md"
   description_state="the merge request description"
+  if [ "${#CI_MERGE_REQUEST_DESCRIPTION}" -ge 2700 ]; then
+    echo "[WARN] CI_MERGE_REQUEST_DESCRIPTION is cut at 2700 characters; set GITLAB_API_TOKEN so the whole description is linted." >&2
+  fi
 elif [ -n "${CI_MERGE_REQUEST_IID:-}" ]; then
   echo "[ERROR] merge request pipeline, but the description is not available." >&2
   echo "        GitLab exposes it as CI_MERGE_REQUEST_DESCRIPTION (16.0 and later); other platforms pass MERGE_REQUEST_DESCRIPTION." >&2

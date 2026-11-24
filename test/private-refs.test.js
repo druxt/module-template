@@ -70,4 +70,25 @@ describe('findPrivateRefs', () => {
       'gitlab.example.local',
     ])
   })
+
+  test('finds an SCP-style remote whose account is not git', () => {
+    expect(hostsIn('deploy@10.0.0.8:team/repo.git')).toEqual(['10.0.0.8'])
+    expect(hostsIn('git@gitlab.example.local:druxt/x.git')).toEqual([
+      'gitlab.example.local',
+    ])
+    expect(hostsIn('git@github.com:druxt/x.git')).toEqual([])
+  })
+
+  test('reads a version spec as a version, not as a host', () => {
+    // The SCP pattern needs a colon and a path after the host, which is what
+    // keeps `10.0.0` here from reading as an RFC1918 address.
+    expect(hostsIn('eslint@10.0.0')).toEqual([])
+    expect(hostsIn('node@16.20.1 yarn@1.22.22 @druxt/dui@0.1.0')).toEqual([])
+  })
+
+  test('reports a host once when both forms match it', () => {
+    expect(hostsIn('https://user@192.168.1.1:8080/path')).toEqual([
+      '192.168.1.1',
+    ])
+  })
 })
